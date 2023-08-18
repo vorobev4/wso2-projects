@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/api/psx/get_xml_start" name="PsxApiGetXmlStart" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET">
+        <inSequence>
+            <log/>
+            <property expression="get-property('env','MERCHANT_DATA_URL')" name="uri.var.merchantDataURL" scope="default" type="STRING"/>
+            <header name="Accept" scope="transport" value="application/xml"/>
+        </inSequence>
+        <outSequence>
+            <log separator="/"/>
+            <propertyGroup>
+                <property expression="$env/*[local-name()='Body']//products" name="gov:/data/xml/psx/AllInfo@products.xml" scope="registry" type="OM"/>
+                <property expression="$env/*[local-name()='Body']//products" name="gov:/data/xml/psx/AllInfoForAttributes@attributes.xml" scope="registry" type="OM"/>
+                <property expression="$env/*[local-name()='Body']//products" name="gov:/data/xml/psx/AllInfoForAttributeOptions@attributeOptions.xml" scope="registry" type="OM"/>
+            </propertyGroup>
+            <respond/>
+        </outSequence>
+        <faultSequence/>
+    </resource>
+</api>

@@ -1,0 +1,10 @@
+---
+key: "PSXTelegrammSend-1.0.0"
+name : "PSXTelegrammSend"
+displayName : "PSXTelegrammSend"
+description: "Sample API"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/api/psx/telegramm/send"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false

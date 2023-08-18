@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="MobiluxNewTestGetData" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM pre_normalization_products WHERE feed_id = ?]]></sql>
+            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+        </statement>
+    </dbreport>
+    <log level="custom">
+        <property name="MobiluxNewTestGetData" value="Start"/>
+    </log>
+    <header name="Accept" scope="transport" value="application/xml"/>
+    <call>
+        <endpoint>
+            <http method="get" uri-template="http://localhost:8290/services/MobiluxDataService/getGoodsId">
+                <suspendOnFailure>
+                    <initialDuration>-1</initialDuration>
+                    <progressionFactor>-1</progressionFactor>
+                    <maximumDuration>0</maximumDuration>
+                </suspendOnFailure>
+                <markForSuspension>
+                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                </markForSuspension>
+            </http>
+        </endpoint>
+    </call>
+    <jsontransform>
+        <property name="synapse.commons.json.output.autoPrimitive" value="false"/>
+    </jsontransform>
+    <iterate continueParent="true" expression="json-eval($..id)" sequential="true">
+        <target>
+            <sequence>
+                <propertyGroup>
+                    <property expression="fn:substring($env/*[local-name()='Body']//jsonValue,2,string-length($env/*[local-name()='Body']//jsonValue) - 2)" name="productId" scope="default" type="STRING"/>
+                    <property expression="get-property('productId')" name="uri.var.productId" scope="default" type="STRING"/>
+                </propertyGroup>
+                <dblookup>
+                    <connection>
+                        <pool>
+                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                        </pool>
+                    </connection>
+                    <statement>
+                        <sql><![CDATA[SELECT data, jsonData 
+            			  FROM mobilux_broken_xml_table
+            			  WHERE feed_id = ?
+            			  AND id = ?]]></sql>
+                        <parameter expression="get-property('feed_id')" type="INTEGER"/>
+                        <parameter expression="get-property('productId')" type="VARCHAR"/>
+                        <result column="jsonData" name="jsonDataProductXml"/>
+                        <result column="data" name="dataProductXml"/>
+                    </statement>
+                </dblookup>
+                <propertyGroup>
+                    <property expression="get-property('dataProductXml')" name="dataProductXml" scope="default" type="OM"/>
+                    <property expression="$ctx:dataProductXml//product_name" name="name" scope="default" type="STRING"/>
+                    <property expression="$ctx:dataProductXml//id" name="code" scope="default" type="STRING"/>
+                    <property expression="$ctx:dataProductXml//category_id" name="category_id" scope="default" type="STRING"/>
+                    <property name="category_name" scope="default" type="STRING" value=""/>
+                    <property name="category_parent" scope="default" type="STRING" value=""/>
+                    <property expression="$ctx:dataProductXml//quantity" name="qty" scope="default" type="STRING"/>
+                    <property expression="$ctx:dataProductXml//price" name="price" scope="default" type="STRING"/>
+                    <property expression="$ctx:dataProductXml//brand" name="vendor_id" scope="default" type="STRING"/>
+                    <property expression="get-property('vendor_id')" name="vendor_name" scope="default" type="STRING"/>
+                    <property expression="$ctx:dataProductXml//ean" name="barcodes" scope="default" type="STRING"/>
+                    <property expression="$ctx:dataProductXml//image" name="images" scope="default" type="STRING"/>
+                    <property expression="get-property('jsonDataProductXml')" name="information" scope="default" type="STRING"/>
+                </propertyGroup>
+                <script language="groovy"><![CDATA[String name = mc.getProperty("name");
+                String vendor = mc.getProperty("vendor_id");
+                vendor = vendor + " ";
+
+                name = name.replaceAll("(?i)" + vendor, "").trim().replaceAll(" +", " ");
+                if (name != null && !name.equals("")) {
+                    name = name.substring(0, 1).toUpperCase() + name.substring(1);
+                }
+                mc.setProperty("name", name);]]></script>
+                <filter xpath="fn:contains(get-property('vendor_id'),'N/A')">
+                    <then>
+                        <property expression="get-property('feed_name')" name="vendor_id" scope="default" type="STRING"/>
+                    </then>
+                    <else/>
+                </filter>
+                <filter regex="&lt;.*>" source="get-property('vendor_id')">
+                    <then>
+                        <property expression="get-property('feed_name')" name="vendor_id" scope="default" type="STRING"/>
+                        <property expression="get-property('feed_name')" name="vendor_name" scope="default" type="STRING"/>
+                    </then>
+                    <else/>
+                </filter>
+                <filter regex="&lt;ean>.*" source="get-property('barcodes')">
+                    <then>
+                        <propertyGroup>
+                            <property expression="fn:concat('&lt;eans>',get-property('barcodes'),'&lt;/eans>')" name="barcodesInFilter" scope="default" type="OM"/>
+                            <property expression="$ctx:barcodesInFilter//ean[1]" name="barcodes" scope="default" type="STRING"/>
+                        </propertyGroup>
+                        <foreach expression="$ctx:barcodesInFilter//ean[position()>1]">
+                            <sequence>
+                                <property expression="fn:concat(get-property('barcodes'),',',$env/*[local-name()='Body']//ean)" name="barcodes" scope="default" type="STRING"/>
+                            </sequence>
+                        </foreach>
+                    </then>
+                    <else/>
+                </filter>
+                <filter xpath="fn:not(normalize-space(get-property('images'))='')">
+                    <then>
+                        <filter regex="&lt;image>.*" source="get-property('images')">
+                            <then>
+                                <propertyGroup>
+                                    <property expression="fn:concat('&lt;images>',get-property('images'),'&lt;/images>')" name="imagesInFilter" scope="default" type="OM"/>
+                                    <property expression="fn:concat('{&quot;images&quot;:[{&quot;image_url&quot;:&quot;',$ctx:imagesInFilter//image[1],'&quot;}')" name="images" scope="default" type="STRING"/>
+                                </propertyGroup>
+                                <foreach expression="$ctx:imagesInFilter//image[position()>1]">
+                                    <sequence>
+                                        <property expression="fn:concat(get-property('images'),',{&quot;image_url&quot;:&quot;',$env/*[local-name()='Body']//image,'&quot;}')" name="images" scope="default" type="STRING"/>
+                                    </sequence>
+                                </foreach>
+                                <property expression="fn:concat(get-property('images'),']}')" name="images" scope="default" type="STRING"/>
+                            </then>
+                            <else>
+                                <property expression="fn:concat('{&quot;images&quot;:[{&quot;image_url&quot;:&quot;',get-property('images'),'&quot;}]}')" name="images" scope="default" type="STRING"/>
+                            </else>
+                        </filter>
+                    </then>
+                    <else>
+                        <property name="images" scope="default" type="STRING" value="{&quot;images&quot;:[{&quot;image_url&quot;:&quot;&quot;}"/>
+                    </else>
+                </filter>
+                <filter regex=">3" source="get-property('qty')">
+                    <then>
+                        <property name="qty" scope="default" type="STRING" value="4"/>
+                    </then>
+                    <else/>
+                </filter>
+                <property expression="get-property('images')" name="images_url" scope="default" type="STRING"/>
+                <dbreport>
+                    <connection>
+                        <pool>
+                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                        </pool>
+                    </connection>
+                    <statement>
+                        <sql><![CDATA[insert into pre_normalization_products 
+                        			  (feed_id, name, code, category_id, category_name, category_parent_id, qty, price, vendor_id, vendor_name, barcodes, images, json_data) 
+                        			  values 
+                        			  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]]></sql>
+                        <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('name')" type="VARCHAR"/>
+                        <parameter expression="get-property('code')" type="VARCHAR"/>
+                        <parameter expression="get-property('category_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('category_name')" type="VARCHAR"/>
+                        <parameter expression="get-property('category_parent')" type="VARCHAR"/>
+                        <parameter expression="get-property('qty')" type="INTEGER"/>
+                        <parameter expression="get-property('price')" type="DOUBLE"/>
+                        <parameter expression="get-property('vendor_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('vendor_name')" type="VARCHAR"/>
+                        <parameter expression="get-property('barcodes')" type="VARCHAR"/>
+                        <parameter expression="get-property('images_url')" type="VARCHAR"/>
+                        <parameter expression="get-property('information')" type="VARCHAR"/>
+                    </statement>
+                </dbreport>
+            </sequence>
+        </target>
+    </iterate>
+    <log level="custom">
+        <property name="ID" value="---------------------------------------------------------------------------------"/>
+    </log>
+    <call>
+        <endpoint>
+            <http method="get" uri-template="http://localhost:8290/api/get_mobilux_categories_data">
+                <suspendOnFailure>
+                    <initialDuration>-1</initialDuration>
+                    <progressionFactor>-1</progressionFactor>
+                    <maximumDuration>0</maximumDuration>
+                </suspendOnFailure>
+                <markForSuspension>
+                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                </markForSuspension>
+            </http>
+        </endpoint>
+    </call>
+    <iterate continueParent="true" expression="$env/*[local-name()='Body']//cat[*]" sequential="true">
+        <target>
+            <sequence>
+                <log category="TRACE" level="custom">
+                    <property expression="$body//id" name="ID"/>
+                    <property expression="$body//name" name="NAME"/>
+                    <property expression="$body//parent_id" name="PARENT"/>
+                </log>
+                <propertyGroup>
+                    <property expression="$body//id" name="ID" scope="default" type="STRING"/>
+                    <property expression="$body//name" name="NAME" scope="default" type="STRING"/>
+                    <property expression="$body//parent_id" name="PARENT" scope="default" type="STRING"/>
+                </propertyGroup>
+                <dbreport>
+                    <connection>
+                        <pool>
+                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                        </pool>
+                    </connection>
+                    <statement>
+                        <sql><![CDATA[UPDATE pre_normalization_products SET category_name = ?, category_parent_id = ? 
+                        			  WHERE feed_id = ? AND category_id = ? ]]></sql>
+                        <parameter expression="get-property('NAME')" type="VARCHAR"/>
+                        <parameter expression="get-property('PARENT')" type="VARCHAR"/>
+                        <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('ID')" type="VARCHAR"/>
+                    </statement>
+                </dbreport>
+            </sequence>
+        </target>
+    </iterate>
+</sequence>

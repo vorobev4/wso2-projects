@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="MobiluxIntegrationNewTestCategories" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="MobiluxIntegrationNewTestCategories" value="Start"/>
+    </log>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM pre_normalization_categories WHERE feed_id = ?]]></sql>
+            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+        </statement>
+    </dbreport>
+    <propertyGroup>
+        <property name="NO_ENTITY_BODY" scope="axis2" type="BOOLEAN" value="true"/>
+        <property action="remove" name="TRANSPORT_HEADERS" scope="axis2"/>
+    </propertyGroup>
+    <header name="Accept" scope="transport" value="application/xml"/>
+    <call>
+        <endpoint>
+            <http method="get" uri-template="http://localhost:8290/services/MobiluxDataService/getUniqueCategoryId?feed_id={uri.var.feed_id}">
+                <suspendOnFailure>
+                    <initialDuration>-1</initialDuration>
+                    <progressionFactor>-1</progressionFactor>
+                    <maximumDuration>0</maximumDuration>
+                </suspendOnFailure>
+                <markForSuspension>
+                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                </markForSuspension>
+            </http>
+        </endpoint>
+    </call>
+    <jsontransform>
+        <property name="synapse.commons.json.output.autoPrimitive" value="true"/>
+    </jsontransform>
+    <iterate continueParent="true" expression="json-eval($..entry[*])" sequential="true">
+        <target>
+            <sequence>
+                <propertyGroup>
+                    <property expression="$env/*[local-name()='Body']//category_id" name="unique_category_id" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//category_parent" name="unique_category_parent" scope="default" type="STRING"/>
+                    <property name="unique_category_name" scope="default" type="STRING" value=""/>
+                    <property expression="get-property('unique_category_parent')" name="uri.var.unique_category_parent" scope="default" type="STRING"/>
+                    <property name="haystackCotegoriesString" scope="default" type="STRING" value="good,id,code,vendor_code,category_id,category,quantity,ean,image,amount_on_pallet,gross_weight,height,length,net_weight,package_dimensions,video,width"/>
+                    <property name="tagsForAttributesInFeed" scope="default" type="STRING" value=""/>
+                </propertyGroup>
+                <dblookup>
+                    <connection>
+                        <pool>
+                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                        </pool>
+                    </connection>
+                    <statement>
+                        <sql><![CDATA[select category_id, COUNT(*) 
+                        			  from feedf_products 
+                        			  where feed_id = ?
+                        			  and category_id = ?]]></sql>
+                        <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('unique_category_id')" type="VARCHAR"/>
+                        <result column="COUNT(*)" name="category_id_count"/>
+                    </statement>
+                </dblookup>
+                <filter regex="&lt;category_parent.*/>" source="get-property('unique_category_parent')">
+                    <then>
+                        <property name="unique_category_parent" scope="default" type="STRING" value=""/>
+                    </then>
+                    <else>
+                        <property expression="get-property('registry','gov:/data/xml/mobilux/CategoriesInfo@categories.xml')" name="mobiluxCategoriesInfo" scope="default" type="OM"/>
+                        <foreach expression="$ctx:mobiluxCategoriesInfo//cat">
+                            <sequence>
+                                <propertyGroup>
+                                    <property expression="$env/*[local-name()='Body']//id" name="catCategoryId" scope="default" type="STRING"/>
+                                    <property expression="$env/*[local-name()='Body']//name" name="catCategoryName" scope="default" type="STRING"/>
+                                </propertyGroup>
+                                <filter xpath="fn:contains(concat('-',get-property('catCategoryId'),'-'),concat('-',get-property('unique_category_id'),'-'))">
+                                    <then>
+                                        <property expression="get-property('catCategoryName')" name="unique_category_name" scope="default" type="STRING"/>
+                                    </then>
+                                    <else/>
+                                </filter>
+                            </sequence>
+                        </foreach>
+                    </else>
+                </filter>
+                <foreach expression="$ctx:mobiluxCategoriesInfo//cat">
+                    <sequence>
+                        <propertyGroup>
+                            <property expression="$env/*[local-name()='Body']//id" name="catCategoryId" scope="default" type="STRING"/>
+                            <property expression="$env/*[local-name()='Body']//name" name="catCategoryName" scope="default" type="STRING"/>
+                        </propertyGroup>
+                        <filter xpath="fn:contains(concat('-',get-property('catCategoryId'),'-'),concat('-',get-property('unique_category_id'),'-'))">
+                            <then>
+                                <property expression="get-property('catCategoryName')" name="unique_category_name" scope="default" type="STRING"/>
+                            </then>
+                            <else/>
+                        </filter>
+                    </sequence>
+                </foreach>
+                <dbreport>
+                    <connection>
+                        <pool>
+                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                        </pool>
+                    </connection>
+                    <statement>
+                        <sql><![CDATA[INSERT INTO pre_normalization_categories 
+                        			  (feed_id, category_id) 
+                        			  VALUES 
+                        			  (?, ?)]]></sql>
+                        <parameter expression="get-property('feed_id')" type="INTEGER"/>
+                        <parameter expression="get-property('unique_category_id')" type="VARCHAR"/>
+                    </statement>
+                </dbreport>
+            </sequence>
+        </target>
+    </iterate>
+    <sequence key="MobiluxIntegrationNewTestCategoriesAttributes"/>
+</sequence>

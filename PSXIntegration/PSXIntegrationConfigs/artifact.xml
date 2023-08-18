@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><artifacts>
+    <artifact name="PsxApiGetXml" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/PsxApiGetXml.xml</file>
+    </artifact>
+    <artifact name="PsxApiGetXml_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/PsxApiGetXml_swagger.yaml</file>
+    </artifact>
+    <artifact name="PsxApiGetXml_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/PsxApiGetXml_metadata.yaml</file>
+    </artifact>
+    <artifact name="PsxApiGetXmlStart" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/PsxApiGetXmlStart.xml</file>
+    </artifact>
+    <artifact name="PsxApiGetXmlStart_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/PsxApiGetXmlStart_swagger.yaml</file>
+    </artifact>
+    <artifact name="PsxApiGetXmlStart_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/PsxApiGetXmlStart_metadata.yaml</file>
+    </artifact>
+    <artifact name="PSXFeedIdSend" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/PSXFeedIdSend.xml</file>
+    </artifact>
+    <artifact name="PSXFeedIdSend_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/PSXFeedIdSend_swagger.yaml</file>
+    </artifact>
+    <artifact name="PSXFeedIdSend_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/PSXFeedIdSend_metadata.yaml</file>
+    </artifact>
+    <artifact name="PSXIntegrationApiStartSequence" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/PSXIntegrationApiStartSequence.xml</file>
+    </artifact>
+    <artifact name="PSXIntegrationApiStartSequence_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/PSXIntegrationApiStartSequence_swagger.yaml</file>
+    </artifact>
+    <artifact name="PSXIntegrationApiStartSequence_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/PSXIntegrationApiStartSequence_metadata.yaml</file>
+    </artifact>
+    <artifact name="PSXTelegrammSend" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/PSXTelegrammSend.xml</file>
+    </artifact>
+    <artifact name="PSXTelegrammSend_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/PSXTelegrammSend_swagger.yaml</file>
+    </artifact>
+    <artifact name="PSXTelegrammSend_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/PSXTelegrammSend_metadata.yaml</file>
+    </artifact>
+    <artifact name="PSXTask" groupId="com.example.task" version="1.0.0" type="synapse/task" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/tasks/PSXTask.xml</file>
+    </artifact>
+    <artifact name="PSXStart" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/PSXStart.xml</file>
+    </artifact>
+    <artifact name="PSXSequence" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/PSXSequence.xml</file>
+    </artifact>
+    <artifact name="PSXProducts" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/PSXProducts.xml</file>
+    </artifact>
+    <artifact name="PSXCategory" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/PSXCategory.xml</file>
+    </artifact>
+    <artifact name="PSXAttributes" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/PSXAttributes.xml</file>
+    </artifact>
+    <artifact name="PSXAttributeOptions" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/PSXAttributeOptions.xml</file>
+    </artifact>
+</artifacts>

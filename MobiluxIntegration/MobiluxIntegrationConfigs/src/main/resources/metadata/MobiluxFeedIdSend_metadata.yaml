@@ -1,0 +1,10 @@
+---
+key: "MobiluxFeedIdSend-1.0.0"
+name : "MobiluxFeedIdSend"
+displayName : "MobiluxFeedIdSend"
+description: "Sample API"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/mobilux/send"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false

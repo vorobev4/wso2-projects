@@ -1,0 +1,60 @@
+<data transports="http https" serviceGroup="" serviceNamespace="" name="MobiluxDataService">
+  <description />
+  <config id="default">
+    <property name="carbon_datasource_name">WSO2CarbonDB</property>
+  </config>
+  <query useConfig="default" id="GetGoodsId">
+    <sql>select id from mobilux_broken_xml_table where feed_id = 9</sql>
+    <result rowName="Entry" element="Entries">
+      <element name="id" xsdType="string" column="id" />
+    </result>
+  </query>
+  <query useConfig="default" id="GetUniqueVendorId">
+    <sql>SELECT DISTINCT vendor_id FROM feedf_products WHERE feed_id = :feed_id</sql>
+    <param name="feed_id" sqlType="STRING" paramType="SCALAR" />
+    <result rowName="entry" element="entries">
+      <element name="vendor_id" xsdType="string" column="vendor_id" requiredRoles="" />
+    </result>
+  </query>
+  <query useConfig="default" id="GetUniqueCategoryId">
+    <sql>SELECT DISTINCT category_id FROM pre_normalization_products WHERE feed_id = :feed_id</sql>
+    <param name="feed_id" sqlType="STRING" paramType="SCALAR" />
+    <result rowName="entry" element="entries">
+      <element name="category_id" xsdType="string" column="category_id" requiredRoles="" />
+    </result>
+  </query>
+  <query useConfig="default" id="GetProductIdWhereCategory">
+    <sql>SELECT p.code as pcode, p.category_id as pcategory_id
+		 FROM `pre_normalization_products` AS `p`
+		 LEFT JOIN `pre_normalization_categories` AS `c`
+		 ON p.category_id = c.category_id
+		 WHERE p.feed_id = :feed_id</sql>
+    <param type="IN" name="feed_id" sqlType="STRING" paramType="SCALAR" optional="false" />
+    <result rowName="Entry" element="Entries">
+      <element name="pcode" xsdType="string" column="pcode" requiredRoles="" />
+      <element name="pcategory_id" xsdType="string" column="pcategory_id" requiredRoles="" />
+    </result>
+  </query>
+  <resource path="getGoodsId" method="GET">
+    <description />
+    <call-query href="GetGoodsId" />
+  </resource>
+  <resource path="getUniqueVendorId" method="GET">
+    <description />
+    <call-query href="GetUniqueVendorId">
+      <with-param name="feed_id" query-param="feed_id" />
+    </call-query>
+  </resource>
+  <resource path="getUniqueCategoryId" method="GET">
+    <description />
+    <call-query href="GetUniqueCategoryId">
+      <with-param name="feed_id" query-param="feed_id" />
+    </call-query>
+  </resource>
+  <resource path="getProductIdWhereCategory" method="GET">
+    <description />
+    <call-query href="GetProductIdWhereCategory">
+      <with-param name="feed_id" query-param="feed_id" />
+    </call-query>
+  </resource>
+</data>

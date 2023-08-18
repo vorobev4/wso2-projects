@@ -1,0 +1,10 @@
+---
+key: "WexlGruppGetXml-1.0.0"
+name : "WexlGruppGetXml"
+displayName : "WexlGruppGetXml"
+description: "Sample API"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/api/wexl_grupp/get_xml"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false

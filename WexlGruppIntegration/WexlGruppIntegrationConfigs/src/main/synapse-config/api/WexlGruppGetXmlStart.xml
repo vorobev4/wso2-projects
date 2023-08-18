@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/api/wexl_grupp/get_xml_start" name="WexlGruppGetXmlStart" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET">
+        <inSequence>
+            <log/>
+            <property expression="get-property('env','WEXLGRUPP_DATA_URL')" name="uri.var.wexlGruppDataURL" scope="default" type="STRING"/>
+            <header name="Accept" scope="transport" value="application/xml"/>
+        </inSequence>
+        <outSequence>
+            <log separator="/"/>
+            <respond/>
+        </outSequence>
+        <faultSequence/>
+    </resource>
+</api>

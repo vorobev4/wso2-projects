@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="WexlGruppNewProducts" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="WexlGruppNewProducts" value="Start"/>
+    </log>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM pre_normalization_products WHERE feed_id = ?;]]></sql>
+            <parameter expression="get-property('feed_id')" type="INTEGER"/>
+        </statement>
+    </dbreport>
+    <!--<property expression="get-property('registry', 'gov:/data/xml/wexlGrupp/AllInfo@products.xml')" name="AllInfoProducts" scope="default" type="OM"/>-->
+    <iterate continueParent="true" expression="$body//product[*]" sequential="true">
+        <target>
+            <sequence>
+                <propertyGroup description="from XML">
+                    <property expression="$env/*[local-name()='Body']//name/en" name="name" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//product_code" name="code" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//category/id" name="category_id" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//category/category_name" name="category_name" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//quantity" name="qty" scope="default" type="INTEGER"/>
+                    <property expression="$env/*[local-name()='Body']//price" name="price" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//brand_name" name="vendor_id" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//brand_name" name="vendor_name" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//ean" name="barcodes" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//image_urls" name="images" scope="default" type="OM"/>
+                </propertyGroup>
+                <jsontransform>
+                    <property name="synapse.commons.json.output.autoPrimitive" value="false"/>
+                </jsontransform>
+                <property expression="json-eval($.product)" name="information" scope="default" type="STRING"/>
+                <filter regex="&lt;.*/>" source="get-property('default', 'barcodes')">
+                    <then>
+                        <property name="barcodes" scope="default" type="STRING" value=""/>
+                    </then>
+                    <else/>
+                </filter>
+                <property expression="fn:concat('{&quot;images&quot;:[{&quot;image_url&quot;:&quot;https://',$ctx:images//image[1],'&quot;}')" name="images_url" scope="default" type="STRING"/>
+                <foreach expression="$ctx:images//image[position()>1]">
+                    <sequence>
+                        <property expression="$env/*[local-name()='Body']//image" name="imageURLCount" scope="default" type="STRING"/>
+                        <property expression="fn:concat(get-property('images_url'),',{&quot;image_url&quot;:&quot;https://',get-property('imageURLCount'),'&quot;}')" name="images_url" scope="default" type="STRING"/>
+                    </sequence>
+                </foreach>
+                <property expression="fn:concat(get-property('images_url'), ']}')" name="images_url" scope="default" type="STRING"/>
+                <filter regex="&lt;.*/>" source="get-property('default', 'code')">
+                    <then/>
+                    <else>
+                        <dbreport>
+                            <connection>
+                                <pool>
+                                    <dsName>jdbc/WSO2CarbonDB</dsName>
+                                </pool>
+                            </connection>
+                            <statement>
+                                <sql><![CDATA[insert into pre_normalization_products 
+                        			  (feed_id, name, code, category_id, category_name, qty, price, vendor_id, vendor_name, barcodes, images, json_data) 
+                        			  values 
+                        			  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]]></sql>
+                                <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                                <parameter expression="get-property('name')" type="VARCHAR"/>
+                                <parameter expression="get-property('code')" type="VARCHAR"/>
+                                <parameter expression="get-property('category_id')" type="VARCHAR"/>
+                                <parameter expression="get-property('category_name')" type="VARCHAR"/>
+                                <parameter expression="get-property('qty')" type="INTEGER"/>
+                                <parameter expression="get-property('price')" type="DOUBLE"/>
+                                <parameter expression="get-property('vendor_id')" type="VARCHAR"/>
+                                <parameter expression="get-property('vendor_name')" type="VARCHAR"/>
+                                <parameter expression="get-property('barcodes')" type="VARCHAR"/>
+                                <parameter expression="get-property('images_url')" type="VARCHAR"/>
+                                <parameter expression="get-property('information')" type="VARCHAR"/>
+                            </statement>
+                        </dbreport>
+                    </else>
+                </filter>
+            </sequence>
+        </target>
+    </iterate>
+</sequence>

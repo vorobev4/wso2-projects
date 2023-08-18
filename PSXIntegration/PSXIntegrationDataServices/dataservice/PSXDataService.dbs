@@ -1,0 +1,19 @@
+<data name="PSXDataService" serviceNamespace="" serviceGroup="" transports="http https">
+  <description>Export from interim_mysql_db</description>
+  <resource path="unique_category_id" method="GET">
+    <description />
+    <call-query href="UniqueCategoryId">
+      <with-param name="feed_id" query-param="feed_id" />
+    </call-query>
+  </resource>
+  <query useConfig="default" id="UniqueCategoryId">
+    <sql>select distinct category_id from pre_normalization_products where feed_id = :feed_id</sql>
+    <param type="IN" name="feed_id" sqlType="STRING" paramType="SCALAR" optional="false" />
+    <result element="entries" rowName="entry">
+      <element name="category_id" requiredRoles="" column="category_id" xsdType="string" />
+    </result>
+  </query>
+  <config id="default">
+    <property name="carbon_datasource_name">WSO2CarbonDB</property>
+  </config>
+</data>

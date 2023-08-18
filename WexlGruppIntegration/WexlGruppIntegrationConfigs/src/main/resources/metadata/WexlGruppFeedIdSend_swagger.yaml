@@ -1,0 +1,13 @@
+openapi: 3.0.1
+info:
+  title: WexlGruppFeedIdSend
+  description: API Definition of WexlGruppFeedIdSend
+  version: 1.0.0
+servers:
+- url: http://localhost:8290/wexlgrupp/send
+paths:
+  /:
+    post:
+      responses:
+        default:
+          description: Default response

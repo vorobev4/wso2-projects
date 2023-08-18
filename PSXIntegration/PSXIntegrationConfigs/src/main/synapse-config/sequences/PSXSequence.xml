@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="PSXSequence" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="PSXSequence" value="Start"/>
+    </log>
+    <clone continueParent="true">
+        <target>
+            <sequence>
+                <payloadFactory media-type="json">
+                    <format>{"app":"wso2","type":"merchants-import","merchantId":"$1","merchantName":"$2","message":"$3","env":"$4"}</format>
+                    <args>
+                        <arg evaluator="xml" expression="get-property('env','PSX_FEED_ID')"/>
+                        <arg evaluator="xml" expression="get-property('env','PSX_FEED_NAME')"/>
+                        <arg value="b. Run getting data from merchant"/>
+                        <arg evaluator="xml" expression="get-property('env','JOB_NAME_STAND')"/>
+                    </args>
+                </payloadFactory>
+                <propertyGroup>
+                    <property expression="get-property('env','ELK_HOST')" name="elkHost" scope="default" type="STRING"/>
+                    <property expression="get-property('env','ELK_PORT')" name="elkPort" scope="default" type="STRING"/>
+                    <property expression="json-eval($)" name="elkMessage" scope="default" type="STRING"/>
+                </propertyGroup>
+                <script language="groovy"><![CDATA[import groovy.json.*;
+					String host = mc.getProperty("elkHost");
+					String msg = mc.getProperty("elkMessage");
+					int prt = Integer.valueOf(mc.getProperty("elkPort").toString());
+					
+					System.out.println(host +":"+ prt +" - "+ msg);
+					
+					try {
+						DatagramSocket socket = new DatagramSocket();
+						InetAddress address = InetAddress.getByName(host);
+						byte[] buf = msg.getBytes();
+						DatagramPacket packet = new DatagramPacket(buf, buf.length, address, prt);
+						socket.send(packet);
+						socket.close();
+					
+						System.out.println("Msg send in logstash. Success!");
+					} catch (Exception e) {
+						System.out.println("Msg send in logstash. Error!");
+					}]]></script>
+                <drop/>
+            </sequence>
+        </target>
+    </clone>
+    <propertyGroup>
+        <property expression="get-property('env','PSX_FEED_ID')" name="feed_id" scope="default" type="INTEGER"/>
+        <property expression="get-property('feed_id')" name="uri.var.feed_id" scope="default" type="INTEGER"/>
+        <property expression="get-property('env','PSX_FEED_NAME')" name="feed_name" scope="default" type="STRING"/>
+        <property expression="get-property('env','PSX_SKU_PREFIX')" name="sku_prefix" scope="default" type="STRING"/>
+        <property expression="fn:substring-after(get-property('MessageID'), 'urn:uuid:')" name="uuid" scope="default" type="STRING"/>
+    </propertyGroup>
+    <call>
+        <endpoint>
+            <http method="get" uri-template="http://localhost:8290/api/psx/get_xml">
+                <suspendOnFailure>
+                    <initialDuration>-1</initialDuration>
+                    <progressionFactor>-1</progressionFactor>
+                    <maximumDuration>0</maximumDuration>
+                </suspendOnFailure>
+                <markForSuspension>
+                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                </markForSuspension>
+            </http>
+        </endpoint>
+    </call>
+    <clone continueParent="true">
+        <target>
+            <sequence>
+                <payloadFactory media-type="json">
+                    <format>{"app":"wso2","type":"merchants-import","merchantId":"$1","merchantName":"$2","message":"$3","env":"$4"}</format>
+                    <args>
+                        <arg evaluator="xml" expression="get-property('env','PSX_FEED_ID')"/>
+                        <arg evaluator="xml" expression="get-property('env','PSX_FEED_NAME')"/>
+                        <arg value="c. Run processing data from merchant"/>
+                        <arg evaluator="xml" expression="get-property('env','JOB_NAME_STAND')"/>
+                    </args>
+                </payloadFactory>
+                <propertyGroup>
+                    <property expression="get-property('env','ELK_HOST')" name="elkHost" scope="default" type="STRING"/>
+                    <property expression="get-property('env','ELK_PORT')" name="elkPort" scope="default" type="STRING"/>
+                    <property expression="json-eval($)" name="elkMessage" scope="default" type="STRING"/>
+                </propertyGroup>
+                <script language="groovy"><![CDATA[import groovy.json.*;
+					String host = mc.getProperty("elkHost");
+					String msg = mc.getProperty("elkMessage");
+					int prt = Integer.valueOf(mc.getProperty("elkPort").toString());
+					
+					System.out.println(host +":"+ prt +" - "+ msg);
+					
+					try {
+						DatagramSocket socket = new DatagramSocket();
+						InetAddress address = InetAddress.getByName(host);
+						byte[] buf = msg.getBytes();
+						DatagramPacket packet = new DatagramPacket(buf, buf.length, address, prt);
+						socket.send(packet);
+						socket.close();
+					
+						System.out.println("Msg send in logstash. Success!");
+					} catch (Exception e) {
+						System.out.println("Msg send in logstash. Error!");
+					}]]></script>
+                <drop/>
+            </sequence>
+        </target>
+    </clone>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[INSERT INTO `import_process_status_log`(`feed_id`, `process_id`, `process_name`) 
+            			  VALUES (?, ?, ?)]]></sql>
+            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+            <parameter expression="get-property('uuid')" type="VARCHAR"/>
+            <parameter type="VARCHAR" value="start"/>
+        </statement>
+    </dbreport>
+    <clone continueParent="true" sequential="true">
+        <target>
+            <sequence>
+                <sequence key="PSXProducts"/>
+                <drop/>
+            </sequence>
+        </target>
+        <target>
+            <sequence>
+                <sequence key="PSXAttributes"/>
+                <drop/>
+            </sequence>
+        </target>
+        <target>
+            <sequence>
+                <sequence key="PSXAttributeOptions"/>
+                <drop/>
+            </sequence>
+        </target>
+        <target>
+            <sequence>
+                <sequence key="PSXCategory"/>
+                <drop/>
+            </sequence>
+        </target>
+    </clone>
+    <payloadFactory media-type="json">
+        <format>{
+	"feedId":"$1",
+    "feedName":"$2",
+    "skuPrefix":"$3",
+    "uuid":"$4"
+}</format>
+        <args>
+            <arg evaluator="xml" expression="get-property('feed_id')"/>
+            <arg evaluator="xml" expression="get-property('feed_name')"/>
+            <arg evaluator="xml" expression="get-property('sku_prefix')"/>
+            <arg evaluator="xml" expression="get-property('uuid')"/>
+        </args>
+    </payloadFactory>
+    <call>
+        <endpoint>
+            <http method="post" uri-template="http://localhost:8290/psx/send">
+                <suspendOnFailure>
+                    <initialDuration>-1</initialDuration>
+                    <progressionFactor>-1</progressionFactor>
+                    <maximumDuration>0</maximumDuration>
+                </suspendOnFailure>
+                <markForSuspension>
+                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                </markForSuspension>
+            </http>
+        </endpoint>
+    </call>
+    <log level="custom" separator="/">
+        <property name="INFO" value="JOB CLOSE"/>
+    </log>
+</sequence>

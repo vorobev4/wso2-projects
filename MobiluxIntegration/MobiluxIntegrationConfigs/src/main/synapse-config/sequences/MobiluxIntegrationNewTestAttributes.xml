@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="MobiluxIntegrationNewTestAttributes" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="MobiluxIntegrationNewTestAttributes" value="Start"/>
+    </log>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM pre_normalization_attributes WHERE feed_id = ?]]></sql>
+            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+        </statement>
+    </dbreport>
+    <propertyGroup>
+        <property name="NO_ENTITY_BODY" scope="axis2" type="BOOLEAN" value="true"/>
+        <property action="remove" name="TRANSPORT_HEADERS" scope="axis2"/>
+    </propertyGroup>
+    <header name="Accept" scope="transport" value="application/xml"/>
+    <call>
+        <endpoint>
+            <http method="get" uri-template="http://localhost:8290/services/MobiluxDataService/getGoodsId">
+                <suspendOnFailure>
+                    <initialDuration>-1</initialDuration>
+                    <progressionFactor>-1</progressionFactor>
+                    <maximumDuration>0</maximumDuration>
+                </suspendOnFailure>
+                <markForSuspension>
+                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                </markForSuspension>
+            </http>
+        </endpoint>
+    </call>
+    <jsontransform>
+        <property name="synapse.commons.json.output.autoPrimitive" value="true"/>
+    </jsontransform>
+    <dblookup>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[SELECT option_used FROM import_wso2_options WHERE option_id='34bf5bb8-a66f-45ac-9e18-d2dac155faa7']]></sql>
+            <result column="option_used" name="optionUsed"/>
+        </statement>
+    </dblookup>
+    <property expression="get-property('optionUsed')" name="haystackAttributesString" scope="default" type="STRING"/>
+    <iterate continueParent="true" expression="json-eval($..id)" sequential="true">
+        <target>
+            <sequence>
+                <property expression="json-eval($)" name="productIdForAttributeAdd" scope="default" type="STRING"/>
+                <dblookup>
+                    <connection>
+                        <pool>
+                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                        </pool>
+                    </connection>
+                    <statement>
+                        <sql><![CDATA[select data 
+                        			  from mobilux_broken_xml_table 
+                        			  where feed_id = ? 
+                        			  and id = ?]]></sql>
+                        <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('productIdForAttributeAdd')" type="VARCHAR"/>
+                        <result column="data" name="xmlData"/>
+                    </statement>
+                </dblookup>
+                <property expression="get-property('xmlData')" name="xmlData" scope="default" type="OM"/>
+                <foreach expression="$ctx:xmlData//*">
+                    <sequence>
+                        <property expression="fn:name($env/*[local-name()='Body']//*)" name="xmlTagName" scope="default" type="STRING"/>
+                        <filter xpath="fn:contains(get-property('haystackAttributesString'), get-property('xmlTagName'))">
+                            <then/>
+                            <else>
+                                <dbreport>
+                                    <connection>
+                                        <pool>
+                                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                                        </pool>
+                                    </connection>
+                                    <statement>
+                                        <sql><![CDATA[INSERT IGNORE INTO pre_normalization_attributes (feed_id, name_in_feed, id_in_feed)
+												  VALUES (?, ?, ?)]]></sql>
+                                        <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                                        <parameter expression="get-property('xmlTagName')" type="VARCHAR"/>
+                                        <parameter expression="get-property('xmlTagName')" type="VARCHAR"/>
+                                    </statement>
+                                </dbreport>
+                                <property expression="fn:concat(get-property('haystackAttributesString'),',',get-property('xmlTagName'))" name="haystackAttributesString" scope="default" type="STRING"/>
+                            </else>
+                        </filter>
+                    </sequence>
+                </foreach>
+            </sequence>
+        </target>
+    </iterate>
+</sequence>

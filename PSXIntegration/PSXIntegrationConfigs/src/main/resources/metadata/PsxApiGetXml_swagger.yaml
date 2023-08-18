@@ -1,0 +1,13 @@
+openapi: 3.0.1
+info:
+  title: PsxApiGetXml
+  description: API Definition of PsxApiGetXml
+  version: 1.0.0
+servers:
+- url: http://localhost:8290/api/psx/get_xml
+paths:
+  /:
+    get:
+      responses:
+        default:
+          description: Default response

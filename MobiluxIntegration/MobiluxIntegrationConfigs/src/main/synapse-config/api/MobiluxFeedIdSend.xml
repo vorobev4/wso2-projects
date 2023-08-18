@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/mobilux/send" name="MobiluxFeedIdSend" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST">
+        <inSequence>
+            <log level="custom">
+                <property name="MobiluxFeedIdSend" value="Start"/>
+            </log>
+            <property expression="get-property('env','NORMOLIZE_JOB_ENDPOINT')" name="uri.var.normolizeJobEndpoint" scope="default" type="STRING"/>
+            <send>
+                <endpoint>
+                    <http method="post" uri-template="{uri.var.normolizeJobEndpoint}">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>-1</progressionFactor>
+                            <maximumDuration>0</maximumDuration>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </send>
+        </inSequence>
+        <outSequence>
+            <respond/>
+        </outSequence>
+        <faultSequence/>
+    </resource>
+</api>

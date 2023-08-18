@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="PSXProducts" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="PSXProducts" value="Start"/>
+    </log>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM pre_normalization_products WHERE feed_id = ?]]></sql>
+            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+        </statement>
+    </dbreport>
+    <iterate continueParent="true" expression="$env/*[local-name()='Body']//product" sequential="true">
+        <target>
+            <sequence>
+                <propertyGroup>
+                    <property expression="$env/*[local-name()='Body']//name" name="name" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//id" name="code" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//category_full" name="category_name" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//category_group" name="category_parent_name" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//quantity_in_stock" name="qty" scope="default" type="INTEGER"/>
+                    <property expression="$env/*[local-name()='Body']//price_wo_vat" name="price" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//brand" name="vendor_name" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//barcode" name="barcodes" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//images" name="images" scope="default" type="OM"/>
+                </propertyGroup>
+                <script language="groovy"><![CDATA[String name = mc.getProperty("name");
+                String vendor = mc.getProperty("vendor_name");
+                vendor = vendor + " ";
+
+                name = name.replaceAll("(?i)" + vendor, "").trim().replaceAll(" +", " ");
+                if (name != null && !name.equals("")) {
+                    name = name.substring(0, 1).toUpperCase() + name.substring(1);
+                }
+                mc.setProperty("name", name);]]></script>
+                <jsontransform>
+                    <property name="synapse.commons.json.output.autoPrimitive" value="false"/>
+                </jsontransform>
+                <property expression="json-eval($.product)" name="information" scope="default" type="STRING"/>
+                <filter regex="&lt;.*/>" source="get-property('vendor_name')">
+                    <then>
+                        <property expression="get-property('feed_name')" name="vendor_name" scope="default" type="STRING"/>
+                    </then>
+                    <else/>
+                </filter>
+                <property expression="get-property('vendor_name')" name="vendor_id" scope="default" type="STRING"/>
+                <property expression="get-property('category_name')" name="category_id" scope="default" type="STRING"/>
+                <filter regex="&lt;.*/>" source="get-property('category_parent_name')">
+                    <then>
+                        <property name="category_parent_name" scope="default" type="STRING" value=""/>
+                    </then>
+                    <else/>
+                </filter>
+                <filter xpath="fn:not(normalize-space(get-property('price'))='')">
+                    <then/>
+                    <else>
+                        <property name="price" scope="default" type="DOUBLE" value="0.0"/>
+                    </else>
+                </filter>
+                <filter regex=".*&lt;/.*>&lt;.*" source="get-property('barcodes')">
+                    <then>
+                        <property expression="//barcode[1]" name="p1" scope="default" type="STRING"/>
+                        <foreach expression="$env/*[local-name()='Body']//barcode[position()>1]">
+                            <sequence>
+                                <property expression="$env/*[local-name()='Body']//barcode" name="p2" scope="default" type="STRING"/>
+                                <property expression="fn:concat(get-property('p1'), ',', get-property('p2'))" name="p1" scope="default" type="STRING"/>
+                            </sequence>
+                        </foreach>
+                        <property expression="get-property('p1')" name="barcodes" scope="default" type="STRING"/>
+                    </then>
+                    <else/>
+                </filter>
+                <property expression="fn:concat('{&quot;images&quot;:[{&quot;image_url&quot;:&quot;',$ctx:images//image_url[1],'&quot;}')" name="images_url" scope="default" type="STRING"/>
+                <foreach expression="$ctx:images//image_url[position()>1]">
+                    <sequence>
+                        <log category="TRACE" level="custom">
+                            <property expression="$env/*[local-name()='Body']//image_url" name="IMAGE_URL"/>
+                        </log>
+                        <property expression="$env/*[local-name()='Body']//image_url" name="imageURLCount" scope="default" type="STRING"/>
+                        <property expression="fn:concat(get-property('images_url'),',{&quot;image_url&quot;:&quot;',get-property('imageURLCount'),'&quot;}')" name="images_url" scope="default" type="STRING"/>
+                    </sequence>
+                </foreach>
+                <property expression="fn:concat(get-property('images_url'),']}')" name="images_url" scope="default" type="STRING"/>
+                <script language="groovy"><![CDATA[import groovy.json.*;
+					String id = mc.getProperty("category_id");
+					String name = mc.getProperty("category_name");
+
+                    if (id.equals(name)) {
+                        id = id.toUpperCase();
+                    }
+
+                    mc.setProperty("category_id", id);]]></script>
+                <dbreport>
+                    <connection>
+                        <pool>
+                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                        </pool>
+                    </connection>
+                    <statement>
+                        <sql><![CDATA[insert into pre_normalization_products 
+                        			  (feed_id, name, code, category_id, category_name, category_parent_name, qty, price, vendor_id, vendor_name, barcodes, images, json_data) 
+                        			  values 
+                        			  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]]></sql>
+                        <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('name')" type="VARCHAR"/>
+                        <parameter expression="get-property('code')" type="VARCHAR"/>
+                        <parameter expression="get-property('category_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('category_name')" type="VARCHAR"/>
+                        <parameter expression="get-property('category_parent_name')" type="VARCHAR"/>
+                        <parameter expression="get-property('qty')" type="INTEGER"/>
+                        <parameter expression="get-property('price')" type="DOUBLE"/>
+                        <parameter expression="get-property('vendor_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('vendor_name')" type="VARCHAR"/>
+                        <parameter expression="get-property('barcodes')" type="VARCHAR"/>
+                        <parameter expression="get-property('images_url')" type="VARCHAR"/>
+                        <parameter expression="get-property('information')" type="VARCHAR"/>
+                    </statement>
+                </dbreport>
+                <switch source="$ctx:vendor_name">
+                    <case regex="Bj.*na">
+                        <dbreport>
+                            <connection>
+                                <pool>
+                                    <dsName>jdbc/WSO2CarbonDB</dsName>
+                                </pool>
+                            </connection>
+                            <statement>
+                                <sql><![CDATA[UPDATE pre_normalization_products 
+		                        			  SET vendor_id = 'BjĆ¶rna', vendor_name = 'BjĆ¶rna'
+		                        			  WHERE feed_id = ? AND vendor_id LIKE 'Bj%rna']]></sql>
+                                <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                            </statement>
+                        </dbreport>
+                    </case>
+                    <case regex="B.*aba">
+                        <dbreport>
+                            <connection>
+                                <pool>
+                                    <dsName>jdbc/WSO2CarbonDB</dsName>
+                                </pool>
+                            </connection>
+                            <statement>
+                                <sql><![CDATA[UPDATE pre_normalization_products 
+		                        			  SET vendor_id = 'BĆ©aba', vendor_name = 'BĆ©aba'
+		                        			  WHERE feed_id = ? AND vendor_id LIKE 'B%aba']]></sql>
+                                <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                            </statement>
+                        </dbreport>
+                    </case>
+                    <default/>
+                </switch>
+            </sequence>
+        </target>
+    </iterate>
+</sequence>

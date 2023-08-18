@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="MobiluxIntegrationNewTestCategoriesAttributes" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="MobiluxIntegrationNewTestCategoriesAttributes" value="Start"/>
+    </log>
+    <propertyGroup>
+        <property name="NO_ENTITY_BODY" scope="axis2" type="BOOLEAN" value="true"/>
+        <property action="remove" name="TRANSPORT_HEADERS" scope="axis2"/>
+    </propertyGroup>
+    <header name="Accept" scope="transport" value="application/xml"/>
+    <call>
+        <endpoint>
+            <http method="get" uri-template="http://localhost:8290/services/MobiluxDataService/getProductIdWhereCategory?feed_id={uri.var.feed_id}">
+                <suspendOnFailure>
+                    <initialDuration>-1</initialDuration>
+                    <progressionFactor>-1</progressionFactor>
+                    <maximumDuration>0</maximumDuration>
+                </suspendOnFailure>
+                <markForSuspension>
+                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                </markForSuspension>
+            </http>
+        </endpoint>
+    </call>
+    <jsontransform>
+        <property name="synapse.commons.json.output.autoPrimitive" value="false"/>
+    </jsontransform>
+    <iterate continueParent="true" expression="json-eval($..Entry[*])" sequential="true">
+        <target>
+            <sequence>
+                <propertyGroup>
+                    <property expression="$env/*[local-name()='Body']//pcode" name="pCode" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//pcategory_id" name="pCategoryId" scope="default" type="STRING"/>
+                    <property name="haystackCategoriesAttributeInFeed" scope="default" type="STRING" value="good,id,code,vendor_code,category_id,category,quantity,ean,image,amount_on_pallet,gross_weight,height,length,net_weight,package_dimensions,video,width"/>
+                </propertyGroup>
+                <dblookup>
+                    <connection>
+                        <pool>
+                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                        </pool>
+                    </connection>
+                    <statement>
+                        <sql><![CDATA[select data 
+                        			  from mobilux_broken_xml_table 
+                        			  where feed_id = ?
+                        			  and id = ?]]></sql>
+                        <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('pCode')" type="VARCHAR"/>
+                        <result column="data" name="categoryAttrAddProductData"/>
+                    </statement>
+                </dblookup>
+                <dblookup>
+                    <connection>
+                        <pool>
+                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                        </pool>
+                    </connection>
+                    <statement>
+                        <sql><![CDATA[select feed_products 
+                        			  from pre_normalization_categories 
+                        			  where feed_id = ?
+                        			  and category_id = ?]]></sql>
+                        <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('pCategoryId')" type="VARCHAR"/>
+                        <result column="feed_products" name="categoryAttrAddAttributesInFeed"/>
+                    </statement>
+                </dblookup>
+                <property expression="get-property('categoryAttrAddProductData')" name="categoryAttrAddProductData" scope="default" type="OM"/>
+                <property expression="get-property('categoryAttrAddAttributesInFeed')" name="categoryAttrAddAttributesInFeed" scope="default" type="STRING"/>
+                <foreach expression="$ctx:categoryAttrAddProductData//*">
+                    <sequence>
+                        <property expression="fn:name($env/*[local-name()='Body']//*)" name="categoryesAtrXmlTagName" scope="default" type="STRING"/>
+                        <log category="TRACE" level="custom">
+                            <property expression="get-property('default','categoryesAtrXmlTagName')" name="INFO"/>
+                        </log>
+                        <filter xpath="fn:contains(get-property('haystackCategoriesAttributeInFeed'), get-property('categoryesAtrXmlTagName'))">
+                            <then/>
+                            <else>
+                                <filter xpath="fn:contains(get-property('categoryAttrAddAttributesInFeed'), get-property('categoryesAtrXmlTagName'))">
+                                    <then/>
+                                    <else>
+                                        <filter xpath="fn:not(normalize-space(get-property('categoryAttrAddAttributesInFeed'))='')">
+                                            <then>
+                                                <property expression="fn:concat(get-property('categoryAttrAddAttributesInFeed'),',',get-property('categoryesAtrXmlTagName'))" name="categoryAttrAddAttributesInFeed" scope="default" type="STRING"/>
+                                            </then>
+                                            <else>
+                                                <property expression="get-property('categoryesAtrXmlTagName')" name="categoryAttrAddAttributesInFeed" scope="default" type="STRING"/>
+                                            </else>
+                                        </filter>
+                                    </else>
+                                </filter>
+                            </else>
+                        </filter>
+                    </sequence>
+                </foreach>
+                <dbreport>
+                    <connection>
+                        <pool>
+                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                        </pool>
+                    </connection>
+                    <statement>
+                        <sql><![CDATA[UPDATE `pre_normalization_categories` 
+                        			  SET `feed_products`= ? 
+                        			  WHERE `feed_id` = ? 
+                        			  AND `category_id` = ?]]></sql>
+                        <parameter expression="get-property('categoryAttrAddAttributesInFeed')" type="VARCHAR"/>
+                        <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                        <parameter expression="get-property('pCategoryId')" type="VARCHAR"/>
+                    </statement>
+                </dbreport>
+            </sequence>
+        </target>
+    </iterate>
+</sequence>

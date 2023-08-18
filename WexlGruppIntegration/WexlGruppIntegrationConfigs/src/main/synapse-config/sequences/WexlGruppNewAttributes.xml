@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="WexlGruppNewAttributes" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="WexlGruppNewAttributes" value="Start"/>
+    </log>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM pre_normalization_attributes WHERE feed_id = ?;]]></sql>
+            <parameter expression="get-property('feed_id')" type="INTEGER"/>
+        </statement>
+    </dbreport>
+    <dblookup>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[SELECT option_used FROM import_wso2_options WHERE option_id = '7447fff2-5f0a-4779-8e49-7b537f3c7179';]]></sql>
+            <result column="option_used" name="optionUsed"/>
+        </statement>
+    </dblookup>
+    <propertyGroup>
+        <property expression="get-property('optionUsed')" name="haystackCotegoriesString" scope="default" type="STRING"/>
+    </propertyGroup>
+    <log category="TRACE" level="custom">
+        <property expression="get-property('optionUsed')" name="INFO"/>
+    </log>
+    <foreach expression="$body/products/product//*">
+        <sequence>
+            <log category="TRACE" level="custom">
+                <property expression="$body" name="INFO"/>
+            </log>
+            <property expression="fn:name($env/*[local-name()='Body']//*)" name="xmlAttrName" scope="default" type="STRING"/>
+            <log category="TRACE" level="custom">
+                <property expression="$body" name="INFO"/>
+            </log>
+            <filter xpath="fn:contains(get-property('haystackCotegoriesString'),get-property('xmlAttrName'))">
+                <then/>
+                <else>
+                    <property expression="fn:concat(get-property('haystackCotegoriesString'),',',get-property('xmlAttrName'))" name="haystackCotegoriesString" scope="default" type="STRING"/>
+                    <dbreport>
+                        <connection>
+                            <pool>
+                                <dsName>jdbc/WSO2CarbonDB</dsName>
+                            </pool>
+                        </connection>
+                        <statement>
+                            <sql><![CDATA[INSERT IGNORE INTO pre_normalization_attributes (feed_id, name_in_feed, id_in_feed)
+												  VALUES (?, ?, ?)]]></sql>
+                            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                            <parameter expression="get-property('xmlAttrName')" type="VARCHAR"/>
+                            <parameter expression="get-property('xmlAttrName')" type="VARCHAR"/>
+                        </statement>
+                    </dbreport>
+                </else>
+            </filter>
+        </sequence>
+    </foreach>
+    <foreach expression="$body/product/parameters/*">
+        <sequence>
+            <property expression="$env/*[local-name()='Body']//id" name="xmlAttrName" scope="default" type="STRING"/>
+            <property expression="$env/*[local-name()='Body']//name" name="xmlAttrValue" scope="default" type="STRING"/>
+            <filter xpath="fn:contains(get-property('haystackCotegoriesString'),get-property('xmlAttrName'))">
+                <then/>
+                <else>
+                    <property expression="fn:concat(get-property('haystackCotegoriesString'),',',get-property('xmlAttrName'))" name="haystackCotegoriesString" scope="default" type="STRING"/>
+                    <dbreport>
+                        <connection>
+                            <pool>
+                                <dsName>jdbc/WSO2CarbonDB</dsName>
+                            </pool>
+                        </connection>
+                        <statement>
+                            <sql><![CDATA[INSERT IGNORE INTO pre_normalization_attributes (feed_id, name_in_feed, id_in_feed)
+												  VALUES (?, ?, ?)]]></sql>
+                            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                            <parameter expression="get-property('xmlAttrValue')" type="VARCHAR"/>
+                            <parameter expression="get-property('xmlAttrName')" type="VARCHAR"/>
+                        </statement>
+                    </dbreport>
+                </else>
+            </filter>
+        </sequence>
+    </foreach>
+</sequence>

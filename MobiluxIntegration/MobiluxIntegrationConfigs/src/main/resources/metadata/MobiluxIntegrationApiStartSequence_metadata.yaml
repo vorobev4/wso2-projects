@@ -1,0 +1,10 @@
+---
+key: "MobiluxIntegrationApiStartSequence-1.0.0"
+name : "MobiluxIntegrationApiStartSequence"
+displayName : "MobiluxIntegrationApiStartSequence"
+description: "Sample API"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/api/mobilux/start"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false

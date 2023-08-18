@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="PSXCategory" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="PSXCategory" value="Start"/>
+    </log>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM pre_normalization_categories WHERE feed_id = ?]]></sql>
+            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+        </statement>
+    </dbreport>
+    <dblookup>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[SELECT option_used FROM import_wso2_options WHERE option_id = 'ab5571e0-fb9e-44a6-bed1-fee7d4dd5048']]></sql>
+            <result column="option_used" name="ignore_attributes"/>
+        </statement>
+    </dblookup>
+    <foreach expression="$env/*[local-name()='Body']//product">
+        <sequence>
+            <log category="TRACE" level="custom">
+                <property expression="upper-case($body//category_full)" name="CODE"/>
+            </log>
+            <property expression="get-property('ignore_attributes')" name="haystackAttributesString" scope="default" type="STRING"/>
+            <property expression="upper-case($body//category_full)" name="code_name" scope="default" type="STRING"/>
+            <filter regex=".*,.*" source="get-property($ctx:code_name)">
+                <then/>
+                <else>
+                    <property name="{get-property('code_name')}" scope="default" type="STRING" value=""/>
+                </else>
+            </filter>
+            <log category="TRACE" level="custom">
+                <property expression="get-property($ctx:code_name)" name="QWE"/>
+            </log>
+            <foreach expression="$env/*[local-name()='Body']//*">
+                <sequence>
+                    <property expression="fn:name($env/*[local-name()='Body']//*)" name="tagName" scope="default" type="STRING"/>
+                    <log category="TRACE" level="custom">
+                        <property expression="get-property('tagName')" name="TAG_NAME"/>
+                    </log>
+                    <filter xpath="fn:contains(get-property('haystackAttributesString'), get-property('tagName'))">
+                        <then/>
+                        <else>
+                            <filter xpath="fn:contains(get-property($ctx:code_name), get-property('tagName'))">
+                                <then/>
+                                <else>
+                                    <property expression="fn:concat(get-property($ctx:code_name), get-property('tagName'), ',')" name="{get-property('code_name')}" scope="default" type="STRING"/>
+                                </else>
+                            </filter>
+                        </else>
+                    </filter>
+                    <log category="TRACE" level="custom">
+                        <property expression="get-property($ctx:code_name)" name="CATEGORY"/>
+                    </log>
+                </sequence>
+            </foreach>
+            <log category="TRACE" level="custom">
+                <property expression="get-property($ctx:code_name)" name="CATEGORY"/>
+            </log>
+        </sequence>
+    </foreach>
+    <property name="NO_ENTITY_BODY" scope="axis2" type="BOOLEAN" value="true"/>
+    <property action="remove" name="TRANSPORT_HEADERS" scope="axis2"/>
+    <header name="Accept" scope="transport" value="application/xml"/>
+    <call>
+        <endpoint>
+            <http method="get" uri-template="http://localhost:8290/services/PSXDataService/unique_category_id?feed_id={uri.var.feed_id}">
+                <suspendOnFailure>
+                    <initialDuration>-1</initialDuration>
+                    <progressionFactor>-1</progressionFactor>
+                    <maximumDuration>0</maximumDuration>
+                </suspendOnFailure>
+                <markForSuspension>
+                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                </markForSuspension>
+            </http>
+            <property name="uri.var.feed_id" value="12"/>
+        </endpoint>
+    </call>
+    <jsontransform>
+        <property name="synapse.commons.json.output.autoPrimitive" value="true"/>
+    </jsontransform>
+    <iterate continueParent="true" expression="json-eval($..entry[*])" sequential="true">
+        <target>
+            <sequence>
+                <propertyGroup>
+                    <property expression="$env/*[local-name()='Body']//category_id" name="unique_category_id" scope="default" type="STRING"/>
+                    <property expression="fn:substring(get-property($ctx:unique_category_id), 0, string-length(get-property($ctx:unique_category_id)))" name="{get-property('unique_category_id')}" scope="default" type="STRING"/>
+                </propertyGroup>
+                <log category="TRACE" level="custom" separator=",">
+                    <property expression="get-property('unique_category_id')" name="unique_category_id"/>
+                </log>
+                <dbreport>
+                    <connection>
+                        <pool>
+                            <dsName>jdbc/WSO2CarbonDB</dsName>
+                        </pool>
+                    </connection>
+                    <statement>
+                        <sql><![CDATA[INSERT INTO pre_normalization_categories 
+                        			  (feed_id, category_id, feed_products) 
+                        			  VALUES 
+                        			  (?, ?, ?)]]></sql>
+                        <parameter expression="get-property('feed_id')" type="INTEGER"/>
+                        <parameter expression="get-property('unique_category_id')" type="VARCHAR"/>
+                        <parameter expression="get-property($ctx:unique_category_id)" type="VARCHAR"/>
+                    </statement>
+                </dbreport>
+            </sequence>
+        </target>
+    </iterate>
+</sequence>

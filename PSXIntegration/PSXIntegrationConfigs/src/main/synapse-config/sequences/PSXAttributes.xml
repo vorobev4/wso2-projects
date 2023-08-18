@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="PSXAttributes" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="PSXAttributes" value="Start"/>
+    </log>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM pre_normalization_attributes WHERE feed_id = ?]]></sql>
+            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+        </statement>
+    </dbreport>
+    <dblookup>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[SELECT option_used FROM import_wso2_options WHERE option_id = 'ab5571e0-fb9e-44a6-bed1-fee7d4dd5048']]></sql>
+            <result column="option_used" name="ignore_attributes"/>
+        </statement>
+    </dblookup>
+    <property expression="get-property('ignore_attributes')" name="haystackAttributesString" scope="default" type="STRING"/>
+    <foreach expression="$env/*[local-name()='Body']//product">
+        <sequence>
+            <log category="TRACE" level="full"/>
+            <property expression="get-property('haystackAttributesString')" name="p2HaystackAttributesString" scope="default" type="STRING"/>
+            <foreach expression="$env/*[local-name()='Body']//*">
+                <sequence>
+                    <property expression="fn:name($env/*[local-name()='Body']//*)" name="xmlTagName" scope="default" type="STRING"/>
+                    <filter xpath="fn:contains(get-property('p2HaystackAttributesString'), get-property('xmlTagName'))">
+                        <then/>
+                        <else>
+                            <property expression="fn:concat(get-property('p2HaystackAttributesString'),',',get-property('xmlTagName'))" name="p1HaystackAttributesString" scope="default" type="STRING"/>
+                            <property expression="get-property('p1HaystackAttributesString')" name="p2HaystackAttributesString" scope="default" type="STRING"/>
+                            <log category="TRACE" level="custom">
+                                <property expression="get-property('xmlTagName')" name="xmlTagName"/>
+                            </log>
+                            <dbreport>
+                                <connection>
+                                    <pool>
+                                        <dsName>jdbc/WSO2CarbonDB</dsName>
+                                    </pool>
+                                </connection>
+                                <statement>
+                                    <sql><![CDATA[INSERT INTO pre_normalization_attributes (feed_id, name_in_feed, id_in_feed)
+												  VALUES (?, ?, ?)]]></sql>
+                                    <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+                                    <parameter expression="get-property('xmlTagName')" type="VARCHAR"/>
+                                    <parameter expression="get-property('xmlTagName')" type="VARCHAR"/>
+                                </statement>
+                            </dbreport>
+                        </else>
+                    </filter>
+                </sequence>
+            </foreach>
+            <property expression="get-property('p2HaystackAttributesString')" name="haystackAttributesString" scope="default" type="STRING"/>
+        </sequence>
+    </foreach>
+</sequence>

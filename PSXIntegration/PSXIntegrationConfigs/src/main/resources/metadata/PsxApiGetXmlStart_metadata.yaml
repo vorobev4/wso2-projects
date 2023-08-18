@@ -1,0 +1,10 @@
+---
+key: "PsxApiGetXmlStart-1.0.0"
+name : "PsxApiGetXmlStart"
+displayName : "PsxApiGetXmlStart"
+description: "Sample API"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/api/psx/get_xml_start"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false

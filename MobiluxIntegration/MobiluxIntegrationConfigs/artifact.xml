@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><artifacts>
+    <artifact name="GetMobiluxCategoriesData" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/GetMobiluxCategoriesData.xml</file>
+    </artifact>
+    <artifact name="GetMobiluxCategoriesData_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/GetMobiluxCategoriesData_swagger.yaml</file>
+    </artifact>
+    <artifact name="GetMobiluxCategoriesData_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/GetMobiluxCategoriesData_metadata.yaml</file>
+    </artifact>
+    <artifact name="GetMobiluxCategoriesDataStart" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/GetMobiluxCategoriesDataStart.xml</file>
+    </artifact>
+    <artifact name="GetMobiluxCategoriesDataStart_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/GetMobiluxCategoriesDataStart_swagger.yaml</file>
+    </artifact>
+    <artifact name="GetMobiluxCategoriesDataStart_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/GetMobiluxCategoriesDataStart_metadata.yaml</file>
+    </artifact>
+    <artifact name="MobiluxFeedIdSend" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/MobiluxFeedIdSend.xml</file>
+    </artifact>
+    <artifact name="MobiluxFeedIdSend_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/MobiluxFeedIdSend_swagger.yaml</file>
+    </artifact>
+    <artifact name="MobiluxFeedIdSend_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/MobiluxFeedIdSend_metadata.yaml</file>
+    </artifact>
+    <artifact name="MobiluxIntegrationApiStartSequence" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/MobiluxIntegrationApiStartSequence.xml</file>
+    </artifact>
+    <artifact name="MobiluxIntegrationApiStartSequence_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/MobiluxIntegrationApiStartSequence_swagger.yaml</file>
+    </artifact>
+    <artifact name="MobiluxIntegrationApiStartSequence_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/MobiluxIntegrationApiStartSequence_metadata.yaml</file>
+    </artifact>
+    <artifact name="MobiluxTelegrammSend" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/MobiluxTelegrammSend.xml</file>
+    </artifact>
+    <artifact name="MobiluxTelegrammSend_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/MobiluxTelegrammSend_swagger.yaml</file>
+    </artifact>
+    <artifact name="MobiluxTelegrammSend_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/MobiluxTelegrammSend_metadata.yaml</file>
+    </artifact>
+    <artifact name="MobiluxTask" groupId="com.example.task" version="1.0.0" type="synapse/task" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/tasks/MobiluxTask.xml</file>
+    </artifact>
+    <artifact name="MobiluxIntegrationNewTestAttributeOptions" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/MobiluxIntegrationNewTestAttributeOptions.xml</file>
+    </artifact>
+    <artifact name="MobiluxIntegrationNewTestAttributes" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/MobiluxIntegrationNewTestAttributes.xml</file>
+    </artifact>
+    <artifact name="MobiluxIntegrationNewTestCategories" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/MobiluxIntegrationNewTestCategories.xml</file>
+    </artifact>
+    <artifact name="MobiluxIntegrationNewTestCategoriesAttributes" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/MobiluxIntegrationNewTestCategoriesAttributes.xml</file>
+    </artifact>
+    <artifact name="MobiluxNewSequence" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/MobiluxNewSequence.xml</file>
+    </artifact>
+    <artifact name="MobiluxNewTestGetData" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/MobiluxNewTestGetData.xml</file>
+    </artifact>
+    <artifact name="MobiluxStart" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/MobiluxStart.xml</file>
+    </artifact>
+</artifacts>

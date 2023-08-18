@@ -1,0 +1,33 @@
+<data transports="http https" serviceGroup="" serviceNamespace="" name="WexlGruppDataService">
+  <description />
+  <config id="InterimDB">
+    <property name="carbon_datasource_name">WSO2CarbonDB</property>
+  </config>
+  <resource method="GET" path="getDistinctVendorId">
+    <description />
+    <call-query href="GetDistinctVendorId">
+      <with-param name="feed_id" query-param="feed_id" />
+    </call-query>
+  </resource>
+  <resource method="GET" path="getDistinctCategoriesId">
+    <description />
+    <call-query href="GetDistinctCategoriesId">
+      <with-param name="feed_id" query-param="feed_id" />
+    </call-query>
+  </resource>
+  <query id="GetDistinctVendorId" useConfig="InterimDB">
+    <sql>SELECT DISTINCT vendor_id FROM feedf_products WHERE feed_id = :feed_id</sql>
+    <param name="feed_id" paramType="SCALAR" sqlType="STRING" />
+    <result element="Entries" rowName="Entry">
+      <element name="vendor_id" column="vendor_id" xsdType="string" requiredRoles="" />
+    </result>
+  </query>
+  <query id="GetDistinctCategoriesId" useConfig="InterimDB">
+    <sql>SELECT DISTINCT category_id, category_name FROM pre_normalization_products WHERE feed_id = :feed_id</sql>
+    <param name="feed_id" paramType="SCALAR" sqlType="STRING" />
+    <result element="Entries" rowName="Entry">
+      <element name="category_name" column="category_name" xsdType="string" requiredRoles="" />
+      <element name="category_id" column="category_id" xsdType="string" requiredRoles="" />
+    </result>
+  </query>
+</data>

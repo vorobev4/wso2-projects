@@ -1,0 +1,28 @@
+stages:
+    - deploy test
+
+variables:
+    app: wso2-wexl-grupp-integration
+    openshift: openshift
+
+deploy test:
+    stage: deploy test
+    image: ktteamde/oc-connect
+    variables:
+        namespace: staging1
+    before_script:
+        - oc login https://console.losh-master.polaru.com:8443 --token=$TOKEN_TEST --insecure-skip-tls-verify
+    script:
+        - sed -i "s/-_-/$(date '+%Y:%m:%d %H:%M')/g" $openshift/$namespace/*/$app.yml
+        - oc apply -f $openshift/$namespace/*/$app.yml
+        - oc rollout status -n "$namespace" "$app" || { oc get event -n $namespace | grep Failed; exit 1; }
+    when: manual
+    tags:
+        - wexl-grupp-integration
+    only:
+        - develop
+        - /^release\/*/
+        - /^hotfix\/*/
+        - /^feature\/*/
+        - tags
+        - web

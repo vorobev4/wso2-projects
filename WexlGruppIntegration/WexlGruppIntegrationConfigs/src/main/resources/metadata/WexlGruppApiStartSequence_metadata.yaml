@@ -1,0 +1,10 @@
+---
+key: "WexlGruppApiStartSequence-1.0.0"
+name : "WexlGruppApiStartSequence"
+displayName : "WexlGruppApiStartSequence"
+description: "Sample API"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/api/job/start"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false

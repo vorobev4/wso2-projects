@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: wso2-psx-integration
+  namespace: staging1
+  labels:
+    app: wso2-psx-integration
+    environment: staging1
+    component: esb
+    service: wso2-psx-integration
+spec:
+  replicas: 1
+  template:
+    metadata:
+        labels:
+          app: wso2-psx-integration
+          environment: staging1
+          component: esb
+          service: wso2-psx-integration
+    spec:
+      containers:
+        - image: registry.elkor.lv/kt-team/esb/wso2-psx-integration:latest
+          imagePullPolicy: Always
+          name: psx-integration
+          env:
+              - name: DEPLOY_TIME
+                value: "-_-"
+              - name: DB_INTERIM_DRIVER
+                value: "com.mysql.cj.jdbc.Driver"
+              - name: DB_INTERIM_PASSWORD
+                value: "a0O51c279CEgthtR"
+              - name: DB_INTERIM_URL
+                value: "jdbc:mysql://192.168.193.5:3711/esb"
+              - name: DB_INTERIM_USER
+                value: "esbtest"
+              - name: DB_MAGENTO_ONE_DRIVER
+                value: "com.mysql.cj.jdbc.Driver"
+              - name: DB_MAGENTO_ONE_PASSWORD
+                value: "ZpgyX76wuyRvPkS3"
+              - name: DB_MAGENTO_ONE_URL
+                value: "jdbc:mysql://192.168.193.5:3711/elkorlvtest"
+              - name: DB_MAGENTO_ONE_USER
+                value: "elkorlvtest"
+              - name: PSX_DATA_URL
+                value: "https://static.psx.lv/xml/short.xml"
+              - name: PSX_FEED_ID
+                value: "12"
+              - name: PSX_FEED_NAME
+                value: "PSX"
+              - name: PSX_SKU_PREFIX
+                value: "PX"
+              - name: NORMOLIZE_JOB_ENDPOINT
+                value: "http://wso2-elkor-normolize.staging1.svc:8290/api/normolize"
+              - name: ELK_HOST
+                value: "172.30.103.18"
+              - name: ELK_PORT
+                value: "5000"
+              - name: JOB_NAME_STAND
+                value: "wso2-psx-integration-staging1"
+              - name: TELEGRAMM_BOT_TOKEN
+                value: "5245116839:AAGZ8Wjjb-a_lxTiKvlgUAzRQYLz8JgOom0"
+              - name: TELEGRAMM_CHAT_ID
+                value: "-1001727214145"
+          resources:
+              requests:
+                  memory: 100Mi
+      imagePullSecrets:
+          -   name: regcred
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wso2-psx-integration
+  namespace: staging1
+spec:
+  ports:
+    - port: 8290
+      protocol: TCP
+      targetPort: 8290
+  selector:
+    app: wso2-psx-integration
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    haproxy.router.openshift.io/timeout: "1800s"
+  name: wso2-psx-integration
+  namespace: staging1
+spec:
+  host: importstaging1.elkor.lv
+  path: /api/psx
+  to:
+    kind: Service
+    name: wso2-psx-integration
+    weight: 100
+  wildcardPolicy: None

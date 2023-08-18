@@ -1,0 +1,10 @@
+---
+key: "GetMobiluxCategoriesDataStart-1.0.0"
+name : "GetMobiluxCategoriesDataStart"
+displayName : "GetMobiluxCategoriesDataStart"
+description: "Sample API"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/api/get_mobilux_categories_data_start"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false

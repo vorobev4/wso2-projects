@@ -1,0 +1,23 @@
+<datasources-configuration xmlns:svns="http://org.wso2.securevault/configuration">
+
+    <providers>
+        <provider>org.wso2.micro.integrator.ndatasource.rdbms.RDBMSDataSourceReader</provider>
+    </providers>
+    <datasources>
+        <datasource>
+            <name>WSO2CarbonDB</name>
+            <description>this database is WSO2CarbonDB</description>
+            <jndiConfig>
+                <name>jdbc/WSO2CarbonDB</name>
+            </jndiConfig>
+            <definition type="RDBMS">
+                <configuration>
+                    <url>${DB_INTERIM_URL}</url>
+                    <username>${DB_INTERIM_USER}</username>
+                    <password>${DB_INTERIM_PASSWORD}</password>
+                    <driverClassName>${DB_INTERIM_DRIVER}</driverClassName>
+                </configuration>
+            </definition>
+        </datasource>
+    </datasources>
+</datasources-configuration>

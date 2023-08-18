@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/api/psx/start" name="PSXIntegrationApiStartSequence" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET">
+        <inSequence>
+            <clone>
+                <target>
+                    <sequence>
+                        <sequence key="PSXSequence"/>
+                    </sequence>
+                </target>
+                <target>
+                    <sequence>
+                        <payloadFactory media-type="text">
+                            <format>Success!</format>
+                            <args/>
+                        </payloadFactory>
+                        <respond/>
+                    </sequence>
+                </target>
+            </clone>
+        </inSequence>
+        <outSequence/>
+        <faultSequence>
+            <log category="TRACE" level="full" separator="&#xa;">
+                <property name="INFO_START" value="---------------------------"/>
+                <property expression="get-property('ERROR_CODE')" name="ERROR_CODE"/>
+                <property expression="get-property('ERROR_MESSAGE')" name="ERROR_MESSAGE"/>
+                <property expression="get-property('ERROR_DETAIL')" name="ERROR_DETAIL"/>
+                <property expression="get-property('ERROR_EXCEPTION')" name="ERROR_EXCEPTION"/>
+            </log>
+            <property expression="get-property('env','PSX_FEED_NAME')" name="feed_name_log" scope="default" type="STRING"/>
+            <script language="groovy"><![CDATA[import groovy.json.*;
+
+				String feedNameLog = mc.getProperty("feed_name_log");
+				String errorCode = mc.getProperty("ERROR_CODE").toString();
+				String errorMessage = mc.getProperty("ERROR_MESSAGE");
+				String errorDetail = mc.getProperty("ERROR_DETAIL");
+				
+				errorDetail = errorDetail.split("at ")[0].replaceAll("\n", "")
+														 .replaceAll("\t", "")
+														 .replaceAll(" +", " ");
+				
+				String outMessage = feedNameLog + " - " +
+									"Error code: " + errorCode +
+									". Error message: " + errorMessage +
+									". Error detail: " + errorDetail;
+				
+				mc.setProperty("uri.var.errorOutMessage", outMessage);]]></script>
+            <clone continueParent="true">
+                <target>
+                    <sequence>
+                        <payloadFactory media-type="json">
+                            <format>{"app":"wso2","type":"merchants-import-alert","merchantId":"$1","merchantName":"$2","message":"$3","env":"$4"}</format>
+                            <args>
+                                <arg evaluator="xml" expression="get-property('env','PSX_FEED_ID')"/>
+                                <arg evaluator="xml" expression="get-property('env','PSX_FEED_NAME')"/>
+                                <arg evaluator="xml" expression="get-property('uri.var.errorOutMessage')"/>
+                                <arg evaluator="xml" expression="get-property('env','JOB_NAME_STAND')"/>
+                            </args>
+                        </payloadFactory>
+                        <propertyGroup>
+                            <property expression="get-property('env','ELK_HOST')" name="elkHost" scope="default" type="STRING"/>
+                            <property expression="get-property('env','ELK_PORT')" name="elkPort" scope="default" type="STRING"/>
+                            <property expression="json-eval($)" name="elkMessage" scope="default" type="STRING"/>
+                        </propertyGroup>
+                        <script language="groovy"><![CDATA[import groovy.json.*;
+					String host = mc.getProperty("elkHost");
+					String msg = mc.getProperty("elkMessage");
+					int prt = Integer.valueOf(mc.getProperty("elkPort").toString());
+					
+					System.out.println(host +":"+ prt +" - "+ msg);
+					
+					try {
+						DatagramSocket socket = new DatagramSocket();
+						InetAddress address = InetAddress.getByName(host);
+						byte[] buf = msg.getBytes();
+						DatagramPacket packet = new DatagramPacket(buf, buf.length, address, prt);
+						socket.send(packet);
+						socket.close();
+					
+						System.out.println("Msg send in logstash. Success!");
+					} catch (Exception e) {
+						System.out.println("Msg send in logstash. Error!");
+					}]]></script>
+                        <drop/>
+                    </sequence>
+                </target>
+            </clone>
+            <payloadFactory media-type="json">
+                <format>
+                    {"msg":"$1"}
+                </format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('uri.var.errorOutMessage')"/>
+                </args>
+            </payloadFactory>
+            <call>
+                <endpoint>
+                    <http method="post" uri-template="http://localhost:8290/api/psx/telegramm/send">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>-1</progressionFactor>
+                            <maximumDuration>0</maximumDuration>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </call>
+        </faultSequence>
+    </resource>
+</api>

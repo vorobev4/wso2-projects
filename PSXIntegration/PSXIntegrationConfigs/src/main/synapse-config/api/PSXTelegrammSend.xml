@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/api/psx/telegramm/send" name="PSXTelegrammSend" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST">
+        <inSequence>
+            <jsontransform>
+                <property name="synapse.commons.json.output.autoPrimitive" value="true"/>
+            </jsontransform>
+            <propertyGroup>
+                <property expression="get-property('env', 'TELEGRAMM_BOT_TOKEN')" name="uri.var.botToken" scope="default" type="STRING"/>
+                <property expression="get-property('env', 'TELEGRAMM_CHAT_ID')" name="uri.var.chatId" scope="default" type="STRING"/>
+                <property expression="json-eval($.msg)" name="uri.var.errorOutMessage" scope="default" type="STRING"/>
+            </propertyGroup>
+            <send>
+                <endpoint>
+                    <http method="get" uri-template="https://api.telegram.org/bot{uri.var.botToken}/sendMessage?chat_id={uri.var.chatId}&amp;text={uri.var.errorOutMessage}">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>-1</progressionFactor>
+                            <maximumDuration>0</maximumDuration>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </send>
+        </inSequence>
+        <outSequence/>
+        <faultSequence/>
+    </resource>
+</api>

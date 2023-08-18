@@ -1,0 +1,13 @@
+openapi: 3.0.1
+info:
+  title: PSXTelegrammSend
+  description: API Definition of PSXTelegrammSend
+  version: 1.0.0
+servers:
+- url: http://localhost:8290/api/psx/telegramm/send
+paths:
+  /:
+    post:
+      responses:
+        default:
+          description: Default response

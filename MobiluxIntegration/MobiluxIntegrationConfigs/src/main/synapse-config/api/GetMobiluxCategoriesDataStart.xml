@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/api/get_mobilux_categories_data_start" name="GetMobiluxCategoriesDataStart" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET">
+        <inSequence>
+            <log level="custom">
+                <property name="GetMobiluxCategoriesData" value="Start"/>
+            </log>
+            <property expression="get-property('env','MOBILUX_CATEGORIES_DATA_URL')" name="uri.var.categoryData" scope="default" type="STRING"/>
+        </inSequence>
+        <outSequence>
+            <property expression="$env/*[local-name()='Body']" name="gov:/data/xml/mobilux/CategoriesInfo@categories.xml" scope="registry" type="OM"/>
+            <log level="custom">
+                <property name="GetMobiluxCategoriesData" value="Success!"/>
+            </log>
+            <respond/>
+        </outSequence>
+        <faultSequence/>
+    </resource>
+</api>

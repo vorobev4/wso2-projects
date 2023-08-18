@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: wso2-psx-integration
+  namespace: production
+  labels:
+    app: wso2-psx-integration
+    environment: prod
+    component: esb
+    service: wso2-psx-integration
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: wso2-psx-integration
+        environment: prod
+        component: esb
+        service: wso2-psx-integration
+    spec:
+      containers:
+        - name: psx-integration
+          image: registry.elkor.lv/kt-team/esb/wso2-psx-integration:latest
+          imagePullPolicy: Always
+          env:
+              - name: DEPLOY_TIME
+                value: "-_-"
+              - name: DB_INTERIM_DRIVER
+                value: "com.mysql.cj.jdbc.Driver"
+              - name: DB_INTERIM_PASSWORD
+                value: "e0cBc61d32WfcUYj"
+              - name: DB_INTERIM_URL
+                value: "jdbc:mysql://192.168.194.4:3720/esb"
+              - name: DB_INTERIM_USER
+                value: "esb"
+              - name: DB_MAGENTO_ONE_DRIVER
+                value: "com.mysql.cj.jdbc.Driver"
+              - name: DB_MAGENTO_ONE_PASSWORD
+                value: "ryCmqfBVkF74XPyV"
+              - name: DB_MAGENTO_ONE_URL
+                value: "jdbc:mysql://192.168.194.4:3720/elkor_shop"
+              - name: DB_MAGENTO_ONE_USER
+                value: "elkor_shop"
+              - name: PSX_DATA_URL
+                value: "https://static.psx.lv/xml/short.xml"
+              - name: PSX_FEED_ID
+                value: "12"
+              - name: PSX_FEED_NAME
+                value: "PSX"
+              - name: PSX_SKU_PREFIX
+                value: "PX"
+              - name: NORMOLIZE_JOB_ENDPOINT
+                value: "http://wso2-elkor-normolize.production.svc:8290/api/normolize"
+              - name: ELK_HOST
+                value: "172.30.223.32"
+              - name: ELK_PORT
+                value: "5000"
+              - name: JOB_NAME_STAND
+                value: "wso2-psx-integration-production"
+              - name: TELEGRAMM_BOT_TOKEN
+                value: "5245116839:AAGZ8Wjjb-a_lxTiKvlgUAzRQYLz8JgOom0"
+              - name: TELEGRAMM_CHAT_ID
+                value: "-1001741794660"
+          ports:
+            - containerPort: 8290
+              protocol: TCP
+          resources:
+              requests:
+                  memory: 1000Mi
+      imagePullSecrets:
+        - name: regcred
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wso2-psx-integration
+  namespace: production
+spec:
+  ports:
+    - port: 8290
+      protocol: TCP
+      targetPort: 8290
+  selector:
+    app: wso2-psx-integration
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    haproxy.router.openshift.io/timeout: "1800s"
+  name: wso2-psx-integration
+  namespace: production
+spec:
+  host: importproduction.elkor.lv
+  path: /api/psx
+  to:
+    kind: Service
+    name: wso2-psx-integration
+    weight: 100
+  wildcardPolicy: None

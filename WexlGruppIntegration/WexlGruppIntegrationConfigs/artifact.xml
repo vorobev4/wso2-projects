@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><artifacts>
+    <artifact name="WexlGruppTask" groupId="com.example.task" version="1.0.0" type="synapse/task" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/tasks/WexlGruppTask.xml</file>
+    </artifact>
+    <artifact name="WexlGruppGetXmlStart" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/WexlGruppGetXmlStart.xml</file>
+    </artifact>
+    <artifact name="WexlGruppGetXmlStart_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/WexlGruppGetXmlStart_swagger.yaml</file>
+    </artifact>
+    <artifact name="WexlGruppGetXmlStart_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/WexlGruppGetXmlStart_metadata.yaml</file>
+    </artifact>
+    <artifact name="WexlGruppGetXml" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/WexlGruppGetXml.xml</file>
+    </artifact>
+    <artifact name="WexlGruppGetXml_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/WexlGruppGetXml_swagger.yaml</file>
+    </artifact>
+    <artifact name="WexlGruppGetXml_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/WexlGruppGetXml_metadata.yaml</file>
+    </artifact>
+    <artifact name="WexlGruppNewSequence" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/WexlGruppNewSequence.xml</file>
+    </artifact>
+    <artifact name="WexlGruppNewProducts" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/WexlGruppNewProducts.xml</file>
+    </artifact>
+    <artifact name="WexlGruppNewCategories" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/WexlGruppNewCategories.xml</file>
+    </artifact>
+    <artifact name="WexlGruppNewAttributes" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/WexlGruppNewAttributes.xml</file>
+    </artifact>
+    <artifact name="WexlGruppNewAttributeOptions" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/WexlGruppNewAttributeOptions.xml</file>
+    </artifact>
+    <artifact name="WexlGruppFeedIdSend" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/WexlGruppFeedIdSend.xml</file>
+    </artifact>
+    <artifact name="WexlGruppFeedIdSend_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/WexlGruppFeedIdSend_swagger.yaml</file>
+    </artifact>
+    <artifact name="WexlGruppFeedIdSend_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/WexlGruppFeedIdSend_metadata.yaml</file>
+    </artifact>
+    <artifact name="WexlGruppApiStartSequence" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/WexlGruppApiStartSequence.xml</file>
+    </artifact>
+    <artifact name="WexlGruppApiStartSequence_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/WexlGruppApiStartSequence_swagger.yaml</file>
+    </artifact>
+    <artifact name="WexlGruppApiStartSequence_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/WexlGruppApiStartSequence_metadata.yaml</file>
+    </artifact>
+    <artifact name="WexlGruppTelegrammSend" groupId="com.example.api" version="1.0.0" type="synapse/api" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/api/WexlGruppTelegrammSend.xml</file>
+    </artifact>
+    <artifact name="WexlGruppTelegrammSend_swagger" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/WexlGruppTelegrammSend_swagger.yaml</file>
+    </artifact>
+    <artifact name="WexlGruppTelegrammSend_metadata" groupId="com.example.metadata" version="1.0.0" type="synapse/metadata" serverRole="EnterpriseServiceBus">
+        <file>src/main/resources/metadata/WexlGruppTelegrammSend_metadata.yaml</file>
+    </artifact>
+    <artifact name="WexlGruppStart" groupId="com.example.sequence" version="1.0.0" type="synapse/sequence" serverRole="EnterpriseServiceBus">
+        <file>src/main/synapse-config/sequences/WexlGruppStart.xml</file>
+    </artifact>
+</artifacts>

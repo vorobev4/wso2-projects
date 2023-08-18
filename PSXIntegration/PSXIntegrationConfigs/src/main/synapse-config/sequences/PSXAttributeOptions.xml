@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="PSXAttributeOptions" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom" separator="/">
+        <property name="PSXAttributeOptions" value="Start"/>
+    </log>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM pre_normalization_attribute_options WHERE feed_id = ?]]></sql>
+            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+        </statement>
+    </dbreport>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM feedf_product_values WHERE feed_id = ?]]></sql>
+            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+        </statement>
+    </dbreport>
+    <dblookup>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[SELECT option_used FROM import_wso2_options WHERE option_id = 'dd42957b-7901-4e53-bad9-7d3ec7b79c04']]></sql>
+            <result column="option_used" name="ignore_attributes"/>
+        </statement>
+    </dblookup>
+    <property expression="get-property('ignore_attributes')" name="haystackAttributesStringForAtributeOptions" scope="default" type="STRING"/>
+    <foreach expression="$env/*[local-name()='Body']//product">
+        <sequence>
+            <property expression="$env/*[local-name()='Body']//id" name="offerCode" scope="default" type="STRING"/>
+            <foreach expression="$env/*[local-name()='Body']//*">
+                <sequence>
+                    <property expression="fn:name($env/*[local-name()='Body']//*)" name="xmlAttrTag" scope="default" type="STRING"/>
+                    <property expression="$env/*[local-name()='Body']//*" name="xmlAttrValue" scope="default" type="STRING"/>
+                    <filter xpath="fn:contains(get-property('haystackAttributesStringForAtributeOptions'), get-property('xmlAttrTag'))">
+                        <then/>
+                        <else>
+                            <filter regex="&lt;.*/>" source="get-property('xmlAttrValue')">
+                                <then/>
+                                <else>
+                                    <filter xpath="fn:contains('description', get-property('xmlAttrTag'))">
+                                        <then/>
+                                        <else>
+                                            <dbreport>
+                                                <connection>
+                                                    <pool>
+                                                        <dsName>jdbc/WSO2CarbonDB</dsName>
+                                                    </pool>
+                                                </connection>
+                                                <statement>
+                                                    <sql><![CDATA[INSERT IGNORE INTO pre_normalization_attribute_options (feed_id, attribute_id_in_feed, id_in_feed, value_in_feed) VALUES (?, ?, ?, ?)]]></sql>
+                                                    <parameter expression="get-property('feed_id')" type="INTEGER"/>
+                                                    <parameter expression="get-property('xmlAttrTag')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('xmlAttrValue')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('xmlAttrValue')" type="VARCHAR"/>
+                                                </statement>
+                                            </dbreport>
+                                            <dbreport>
+                                                <connection>
+                                                    <pool>
+                                                        <dsName>jdbc/WSO2CarbonDB</dsName>
+                                                    </pool>
+                                                </connection>
+                                                <statement>
+                                                    <sql><![CDATA[INSERT INTO feedf_product_values (feed_id, offer_code, attribute_id, value) VALUES (?, ?, ?, ?)]]></sql>
+                                                    <parameter expression="get-property('feed_id')" type="INTEGER"/>
+                                                    <parameter expression="get-property('offerCode')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('xmlAttrTag')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('xmlAttrValue')" type="VARCHAR"/>
+                                                </statement>
+                                            </dbreport>
+                                        </else>
+                                    </filter>
+                                </else>
+                            </filter>
+                        </else>
+                    </filter>
+                </sequence>
+            </foreach>
+        </sequence>
+    </foreach>
+</sequence>

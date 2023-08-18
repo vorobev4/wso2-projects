@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="MobiluxNewSequence" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="MobiluxNewSequence" value="Start"/>
+    </log>
+    <clone continueParent="true">
+        <target>
+            <sequence>
+                <payloadFactory media-type="json">
+                    <format>{"app":"wso2","type":"getting","merchantId":"$1","merchantName":"$2","message":"$3","env":"$4"}</format>
+                    <args>
+                        <arg evaluator="xml" expression="get-property('env','MOBILUX_FEED_ID')"/>
+                        <arg evaluator="xml" expression="get-property('env','MOBILUX_FEED_NAME')"/>
+                        <arg value="b. Run getting data from merchant"/>
+                        <arg evaluator="xml" expression="get-property('env','JOB_NAME_STAND')"/>
+                    </args>
+                </payloadFactory>
+                <propertyGroup>
+                    <property expression="get-property('env','ELK_HOST')" name="elkHost" scope="default" type="STRING"/>
+                    <property expression="get-property('env','ELK_PORT')" name="elkPort" scope="default" type="STRING"/>
+                    <property expression="json-eval($)" name="elkMessage" scope="default" type="STRING"/>
+                </propertyGroup>
+                <script language="groovy"><![CDATA[import groovy.json.*;
+					String host = mc.getProperty("elkHost");
+					String msg = mc.getProperty("elkMessage");
+					int prt = Integer.valueOf(mc.getProperty("elkPort").toString());
+					
+					System.out.println(host +":"+ prt +" - "+ msg);
+					
+					try {
+						DatagramSocket socket = new DatagramSocket();
+						InetAddress address = InetAddress.getByName(host);
+						byte[] buf = msg.getBytes();
+						DatagramPacket packet = new DatagramPacket(buf, buf.length, address, prt);
+						socket.send(packet);
+						socket.close();
+					
+						System.out.println("Msg send in logstash. Success!");
+					} catch (Exception e) {
+						System.out.println("Msg send in logstash. Error!");
+					}]]></script>
+                <drop/>
+            </sequence>
+        </target>
+        <target>
+            <sequence/>
+        </target>
+    </clone>
+    <propertyGroup>
+        <property expression="get-property('env','MOBILUX_FEED_ID')" name="feed_id" scope="default" type="INTEGER"/>
+        <property expression="get-property('feed_id')" name="uri.var.feed_id" scope="default" type="INTEGER"/>
+        <property expression="get-property('env','MOBILUX_FEED_NAME')" name="feed_name" scope="default" type="STRING"/>
+        <property expression="get-property('env','MOBILUX_SKU_PREFIX')" name="sku_prefix" scope="default" type="STRING"/>
+        <property expression="fn:substring-after(get-property('MessageID'), 'urn:uuid:')" name="uuid" scope="default" type="STRING"/>
+    </propertyGroup>
+    <class name="com.example.kt.castom.parser.StAXtoMySQLParser">
+        <property expression="get-property('env','MOBILUX_PRODUCTS_DATA_URL')" name="getDataUrl"/>
+        <property name="mainTag" value="xml"/>
+        <property name="bodyTag" value="good"/>
+        <property name="uIdTag" value="id"/>
+        <property name="barcodeTag" value="ean"/>
+        <property name="barcodesArrTag" value="eans"/>
+        <property expression="get-property('env','DB_INTERIM_URL')" name="mysqlUrl"/>
+        <property expression="get-property('env','DB_INTERIM_USER')" name="mysqlUsername"/>
+        <property expression="get-property('env','DB_INTERIM_PASSWORD')" name="mysqlPassword"/>
+        <property expression="get-property('env','DB_INTERIM_DRIVER')" name="mysqlDriver"/>
+        <property expression="get-property('feed_id')" name="feedId"/>
+        <property name="mysqlCreateTableName" value="mobilux_broken_xml_table"/>
+    </class>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[INSERT INTO `import_process_status_log`(`feed_id`, `process_id`, `process_name`) 
+            			  VALUES (?, ?, ?)]]></sql>
+            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+            <parameter expression="get-property('uuid')" type="VARCHAR"/>
+            <parameter type="VARCHAR" value="start"/>
+        </statement>
+    </dbreport>
+    <clone continueParent="true">
+        <target>
+            <sequence>
+                <payloadFactory media-type="json">
+                    <format>{"app":"wso2","type":"starting","merchantId":"$1","merchantName":"$2","message":"$3","env":"$4"}</format>
+                    <args>
+                        <arg evaluator="xml" expression="get-property('env','MOBILUX_FEED_ID')"/>
+                        <arg evaluator="xml" expression="get-property('env','MOBILUX_FEED_NAME')"/>
+                        <arg value="c. Run processing data from merchant"/>
+                        <arg evaluator="xml" expression="get-property('env','JOB_NAME_STAND')"/>
+                    </args>
+                </payloadFactory>
+                <propertyGroup>
+                    <property expression="get-property('env','ELK_HOST')" name="elkHost" scope="default" type="STRING"/>
+                    <property expression="get-property('env','ELK_PORT')" name="elkPort" scope="default" type="STRING"/>
+                    <property expression="json-eval($)" name="elkMessage" scope="default" type="STRING"/>
+                </propertyGroup>
+                <script language="groovy"><![CDATA[import groovy.json.*;
+					String host = mc.getProperty("elkHost");
+					String msg = mc.getProperty("elkMessage");
+					int prt = Integer.valueOf(mc.getProperty("elkPort").toString());
+					
+					System.out.println(host +":"+ prt +" - "+ msg);
+					
+					try {
+						DatagramSocket socket = new DatagramSocket();
+						InetAddress address = InetAddress.getByName(host);
+						byte[] buf = msg.getBytes();
+						DatagramPacket packet = new DatagramPacket(buf, buf.length, address, prt);
+						socket.send(packet);
+						socket.close();
+					
+						System.out.println("Msg send in logstash. Success!");
+					} catch (Exception e) {
+						System.out.println("Msg send in logstash. Error!");
+					}]]></script>
+                <drop/>
+            </sequence>
+        </target>
+        <target>
+            <sequence/>
+        </target>
+    </clone>
+    <sequence key="MobiluxNewTestGetData"/>
+    <sequence key="MobiluxIntegrationNewTestCategories"/>
+    <sequence key="MobiluxIntegrationNewTestAttributes"/>
+    <sequence key="MobiluxIntegrationNewTestAttributeOptions"/>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM feedf_product_values WHERE feed_id = ?]]></sql>
+            <parameter expression="get-property('feed_id')" type="VARCHAR"/>
+        </statement>
+    </dbreport>
+    <dblookup>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[SELECT option_used FROM import_wso2_options WHERE option_id='34bf5bb8-a66f-45ac-9e18-d2dac155faa7']]></sql>
+            <result column="option_used" name="optionUsed"/>
+        </statement>
+    </dblookup>
+    <class name="com.example.kt.castom.parser.CustomParcer">
+        <property expression="get-property('feed_id')" name="feedId"/>
+        <property expression="get-property('optionUsed')" name="badTags"/>
+        <property expression="get-property('env','DB_INTERIM_URL')" name="mysqlUrl"/>
+        <property expression="get-property('env','DB_INTERIM_USER')" name="mysqlUsername"/>
+        <property expression="get-property('env','DB_INTERIM_PASSWORD')" name="mysqlPassword"/>
+        <property expression="get-property('env','DB_INTERIM_DRIVER')" name="mysqlDriver"/>
+    </class>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DROP TABLE mobilux_broken_xml_table]]></sql>
+        </statement>
+    </dbreport>
+    <payloadFactory media-type="json">
+        <format>{
+	"feedId":"$1",
+    "feedName":"$2",
+    "skuPrefix":"$3",
+    "uuid":"$4"
+}</format>
+        <args>
+            <arg evaluator="xml" expression="get-property('feed_id')"/>
+            <arg evaluator="xml" expression="get-property('feed_name')"/>
+            <arg evaluator="xml" expression="get-property('sku_prefix')"/>
+            <arg evaluator="xml" expression="get-property('uuid')"/>
+        </args>
+    </payloadFactory>
+    <call>
+        <endpoint>
+            <http method="post" uri-template="http://localhost:8290/mobilux/send">
+                <suspendOnFailure>
+                    <initialDuration>-1</initialDuration>
+                    <progressionFactor>-1</progressionFactor>
+                    <maximumDuration>0</maximumDuration>
+                </suspendOnFailure>
+                <markForSuspension>
+                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                </markForSuspension>
+            </http>
+        </endpoint>
+    </call>
+    <log level="custom" separator="/">
+        <property name="MobiluxNewSequence" value="STOP"/>
+    </log>
+</sequence>

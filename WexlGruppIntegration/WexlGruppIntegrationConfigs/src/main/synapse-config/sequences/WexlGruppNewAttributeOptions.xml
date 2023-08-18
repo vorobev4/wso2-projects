@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="WexlGruppNewAttributeOptions" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="WexlGruppNewAttributeOptions" value="Start"/>
+    </log>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM pre_normalization_attribute_options WHERE feed_id = ?;]]></sql>
+            <parameter expression="get-property('feed_id')" type="INTEGER"/>
+        </statement>
+    </dbreport>
+    <dbreport>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[DELETE FROM feedf_product_values WHERE feed_id = ?;]]></sql>
+            <parameter expression="get-property('feed_id')" type="INTEGER"/>
+        </statement>
+    </dbreport>
+    <dblookup>
+        <connection>
+            <pool>
+                <dsName>jdbc/WSO2CarbonDB</dsName>
+            </pool>
+        </connection>
+        <statement>
+            <sql><![CDATA[SELECT option_used FROM import_wso2_options WHERE option_id = '8ad183fe-f218-4d38-b911-8c84c920ce7b';]]></sql>
+            <result column="option_used" name="optionUsed"/>
+        </statement>
+    </dblookup>
+    <propertyGroup>
+        <property expression="get-property('optionUsed')" name="haystackCotegoriesString" scope="default" type="STRING"/>
+    </propertyGroup>
+    <foreach expression="$body//product[*]">
+        <sequence>
+            <log category="TRACE" level="custom">
+                <property expression="$env/*[local-name()='Body']//product_code" name="INFO"/>
+            </log>
+            <property expression="$env/*[local-name()='Body']//product_code" name="offerCode" scope="default" type="STRING"/>
+            <filter xpath="fn:contains('&lt;product_code/>', get-property('offerCode'))">
+                <then/>
+                <else>
+                    <foreach expression="$env/*[local-name()='Body']/product/*">
+                        <sequence>
+                            <property expression="fn:name($env/*[local-name()='Body']//*)" name="xmlAttrName" scope="default" type="STRING"/>
+                            <property expression="$env/*[local-name()='Body']//*" name="xmlAttrValue" scope="default" type="STRING"/>
+                            <filter xpath="fn:contains('parameters',get-property('xmlAttrName'))">
+                                <then>
+                                    <foreach expression="$env/*[local-name()='Body']/parameters/*">
+                                        <sequence>
+                                            <propertyGroup>
+                                                <property expression="$env/*[local-name()='Body']//id" name="itemId" scope="default" type="STRING"/>
+                                                <property expression="$env/*[local-name()='Body']//value" name="itemValue" scope="default" type="STRING"/>
+                                            </propertyGroup>
+                                            <dbreport>
+                                                <connection>
+                                                    <pool>
+                                                        <dsName>jdbc/WSO2CarbonDB</dsName>
+                                                    </pool>
+                                                </connection>
+                                                <statement>
+                                                    <sql><![CDATA[INSERT IGNORE INTO pre_normalization_attribute_options (feed_id, attribute_id_in_feed, id_in_feed, value_in_feed) VALUES (?, ?, ?, ?)]]></sql>
+                                                    <parameter expression="get-property('feed_id')" type="INTEGER"/>
+                                                    <parameter expression="get-property('itemId')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('itemValue')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('itemValue')" type="VARCHAR"/>
+                                                </statement>
+                                            </dbreport>
+                                            <dbreport>
+                                                <connection>
+                                                    <pool>
+                                                        <dsName>jdbc/WSO2CarbonDB</dsName>
+                                                    </pool>
+                                                </connection>
+                                                <statement>
+                                                    <sql><![CDATA[INSERT IGNORE INTO feedf_product_values (feed_id, offer_code, attribute_id, value) VALUES (?, ?, ?, ?)]]></sql>
+                                                    <parameter expression="get-property('feed_id')" type="INTEGER"/>
+                                                    <parameter expression="get-property('offerCode')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('itemId')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('itemValue')" type="VARCHAR"/>
+                                                </statement>
+                                            </dbreport>
+                                        </sequence>
+                                    </foreach>
+                                </then>
+                                <else>
+                                    <filter xpath="fn:contains(get-property('haystackCotegoriesString'), get-property('xmlAttrName'))">
+                                        <then/>
+                                        <else>
+                                            <filter xpath="fn:contains('name', get-property('xmlAttrName'))">
+                                                <then>
+                                                    <property expression="$env/*[local-name()='Body']/name/en" name="xmlAttrValue" scope="default" type="STRING"/>
+                                                </then>
+                                                <else/>
+                                            </filter>
+                                            <filter xpath="fn:contains('ean', get-property('xmlAttrName'))">
+                                                <then>
+                                                    <property name="xmlAttrValue" scope="default" type="STRING" value=""/>
+                                                </then>
+                                                <else/>
+                                            </filter>
+                                            <dbreport>
+                                                <connection>
+                                                    <pool>
+                                                        <dsName>jdbc/WSO2CarbonDB</dsName>
+                                                    </pool>
+                                                </connection>
+                                                <statement>
+                                                    <sql><![CDATA[INSERT IGNORE INTO pre_normalization_attribute_options (feed_id, attribute_id_in_feed, id_in_feed, value_in_feed) VALUES (?, ?, ?, ?)]]></sql>
+                                                    <parameter expression="get-property('feed_id')" type="INTEGER"/>
+                                                    <parameter expression="get-property('xmlAttrName')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('xmlAttrValue')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('xmlAttrValue')" type="VARCHAR"/>
+                                                </statement>
+                                            </dbreport>
+                                            <dbreport>
+                                                <connection>
+                                                    <pool>
+                                                        <dsName>jdbc/WSO2CarbonDB</dsName>
+                                                    </pool>
+                                                </connection>
+                                                <statement>
+                                                    <sql><![CDATA[INSERT IGNORE INTO feedf_product_values (feed_id, offer_code, attribute_id, value) VALUES (?, ?, ?, ?)]]></sql>
+                                                    <parameter expression="get-property('feed_id')" type="INTEGER"/>
+                                                    <parameter expression="get-property('offerCode')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('xmlAttrName')" type="VARCHAR"/>
+                                                    <parameter expression="get-property('xmlAttrValue')" type="VARCHAR"/>
+                                                </statement>
+                                            </dbreport>
+                                        </else>
+                                    </filter>
+                                </else>
+                            </filter>
+                        </sequence>
+                    </foreach>
+                </else>
+            </filter>
+        </sequence>
+    </foreach>
+</sequence>
